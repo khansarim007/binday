@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds BinDay, runs the test harness, and refreshes binday/dist.
+# Builds BinDay, runs the test harness, and refreshes dist/ and BinDay-windows.zip.
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -24,8 +24,8 @@ echo "== dist =="
 ls -lh dist
 
 if command -v zip >/dev/null 2>&1; then
-    (cd dist && rm -f ../../BinDay-windows.zip && zip -q -r ../../BinDay-windows.zip .)
+    (cd dist && rm -f ../BinDay-windows.zip && zip -q -r ../BinDay-windows.zip .)
     echo
     echo "== BinDay-windows.zip =="
-    ls -lh ../BinDay-windows.zip
+    ls -lh BinDay-windows.zip
 fi

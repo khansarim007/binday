@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Run the engine tests
+        run: dotnet run --project tests -c Release
+
+      - name: Build the Windows app
+        run: dotnet build src/BinDay.csproj -c Release
+
+  site:
+    name: Check the website
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make sure the site files are there
+        run: |
+          test -f site/index.html
+          test -f site/assets/styles.css
+          test -f site/assets/icon.svg
+          test -f site/assets/screenshot.png
+          test -f site/assets/og.png

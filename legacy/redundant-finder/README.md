@@ -85,18 +85,18 @@ Requires the .NET SDK (any recent version; the project targets .NET Framework 4.
 
 ```bash
 # build the exe (works on Windows and on Linux/macOS via reference assemblies)
-dotnet build app/src/RedundantFinder.csproj -c Release
+dotnet build src/RedundantFinder.csproj -c Release
 
 # output
-app/src/bin/Release/net48/RedundantFinder.exe
+src/bin/Release/net48/RedundantFinder.exe
 ```
 
 ```bash
 # run the test harness (platform independent, 43 checks)
-dotnet run --project app/tests -c Release
+dotnet run --project tests -c Release
 ```
 
-Or run `app/build.sh`, which does both and refreshes `dist/`.
+Or run `build.sh`, which does both and refreshes `dist/`.
 
 ## Verification status
 

@@ -1,241 +1,192 @@
-# Disk space tools for Windows 10 / 11
+<div align="center">
 
-Three ways to find space your PC is wasting, and to get it back safely.
+<img src="site/assets/icon.svg" alt="BinDay" width="96" height="96">
 
-| Tool | What it is | Start here |
-|---|---|---|
-| **BinDay** — `binday/dist/BinDay.exe` | 95 KB native app. Scans for build junk, caches, temp files, old installers and duplicates, shows you every item with a safety grade, and only removes what you tick. | **[binday/README.md](binday/README.md)** · `BinDay-windows.zip` |
-| **Redundant File Finder** — `app/dist/RedundantFinder.exe` | 76 KB native app that finds duplicate files and lets you quarantine or delete the extra copies. | **[app/README.md](app/README.md)** |
-| **PowerShell script** — `Find-RedundantFiles.ps1` | Scriptable duplicate finder: CSV reports, headless, scheduled runs. | Section 3 below |
+# BinDay
 
-BinDay is the newest of the three and the one to start with: it covers
-duplicates *and* everything else that is disposable, in a window that explains
-what it found before you touch anything.
+**Free up space on your Windows PC.**
 
-### Get it
+[![CI](https://github.com/khansarim007/binday/actions/workflows/ci.yml/badge.svg)](https://github.com/khansarim007/binday/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](LICENSE)
+[![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011-0078D4?logo=windows)](https://learn.microsoft.com/en-us/windows/whats-new/)
+[![Release](https://img.shields.io/github/v/release/khansarim007/binday?label=release)](https://github.com/khansarim007/binday/releases/latest)
 
-Download **`BinDay-windows.zip`** (35 KB) from the
-[releases page](https://github.com/khansarim007/directory/releases/tag/v1.0.0),
-unzip it anywhere, and double click `Install.bat`. You get a Desktop icon and
-a Start menu entry. No admin rights, no runtime download.
+[Download](https://github.com/khansarim007/binday/releases/latest/download/BinDay-windows.zip) &middot;
+[Website](https://khansarim007.github.io/binday/) &middot;
+[Releases](https://github.com/khansarim007/binday/releases)
 
-Or clone the repo and run `binday/build.sh` to build it yourself.
+</div>
 
 ---
 
-## Redundant File Finder (script and app)
+BinDay is a small native Windows app that finds the things your machine does not
+need any more - build output, dependency folders, package caches, temp files,
+old installers and duplicate files - shows you exactly what it found and **why it
+is safe to remove**, and then waits for you to say yes.
 
-A safe way to find files that are wasting space on your SSD, review them, and then
-reclaim the space by **quarantining** (reversible) or deleting the extra copies.
+**Nothing is deleted on its own. Ever.**
 
-> **Important:** this tool was written for *your* machine, not run on it. It was
-> syntax-checked and functionally tested on PowerShell 7.4.6 (all three modes, on a
-> synthetic duplicate tree). It is written to be Windows PowerShell 5.1 compatible,
-> which is what ships with Windows 10/11. Still: **run the Report mode first.**
+![The BinDay window after a scan](docs/window-scan.png)
 
-## Two ways to use this
+## Why another cleaner
 
-| Option | What it is | Best for |
+Most disk cleaners work by hiding the decision from you: a green button, a
+progress bar, and a folder you did not know existed is gone. BinDay is the
+opposite. Every item comes with a size, a plain sentence explaining what
+removing it means, and a grade that decides what the app is allowed to do.
+
+| Grade     | Meaning                                                      | Permanent delete |
+|-----------|--------------------------------------------------------------|------------------|
+| `Safe`    | Regenerated automatically by your tools                       | allowed          |
+| `Check`   | Regenerated, but the next build would need the network        | refused          |
+| `Review`  | Could be something you want to keep (old installers)           | refused          |
+
+Only `Safe` items can ever be deleted permanently, and that rule lives in the
+engine rather than in the button.
+
+## What it finds
+
+**Build output and dependencies** - each one needs a marker file next to it
+before BinDay will touch it, so a folder that is merely *called* `bin` is left
+alone.
+
+| Folder | Needs | Grade |
 |---|---|---|
-| **Native app** — `app/dist/RedundantFinder.exe` | 76 KB WinForms app on the built-in .NET Framework 4.8. No installer, no runtime download, no admin rights. Double-click `app/dist/Install.bat` to get an icon on your Desktop and in the Start menu. | Everyday click-and-go use |
-| **PowerShell script** — `Find-RedundantFiles.ps1` | Scriptable, CSV reports, works headless / on servers | Automation, scheduled runs, remote machines |
+| `node_modules` | `package.json` | Safe |
+| `.next`, `.nuxt`, `.svelte-kit`, `.angular`, `.turbo`, `.parcel-cache` | `package.json` | Safe |
+| `coverage` | `package.json` | Safe |
+| `obj`, `bin` | `*.csproj`, `*.fsproj`, `*.vbproj`, `*.sln` | Safe |
+| `.vs` | `*.sln`, `*.csproj` | Check |
+| `target` | `Cargo.toml` | Safe |
+| `.venv`, `venv` | `pyproject.toml`, `requirements.txt`, `setup.py`, `Pipfile` | Safe |
+| `__pycache__` | - | Safe |
+| `.pytest_cache`, `.mypy_cache`, `.ruff_cache` | - | Safe |
+| `.dart_tool` | `pubspec.yaml` | Safe |
+| `.gradle` (project local) | `settings.gradle`, `build.gradle` | Safe |
+| `.zig-cache`, `zig-out` | `build.zig` | Safe |
 
-The app has its own guide: **[app/README.md](app/README.md)** — including how to build
-it from source and how the safety rules work. The rest of this file documents the
-script, which produces the same kind of report.
+**Known caches** - checked wherever they live, not only inside your scan folder.
 
----
-
-## 1. What it finds
-
-| Found | Report file |
+| Location | Grade |
 |---|---|
-| Byte-for-byte duplicate files (same SHA-256) | `duplicates.csv` |
-| How much space those duplicates waste | `summary.txt` |
-| The biggest individual files | `largest-files.csv` |
-| The folders eating the most space | `top-folders.csv` |
+| `%LOCALAPPDATA%\npm-cache`, `\Yarn\Cache`, `\pnpm\store`, `\pip\Cache` | Safe |
+| `%LOCALAPPDATA%\Temp` | Safe |
+| `%USERPROFILE%\.nuget\packages` | Check |
+| `%USERPROFILE%\.gradle\caches` | Check |
+| `%USERPROFILE%\.m2\repository` | Check |
 
-It does **not** find: visually similar but re-encoded photos/videos, compressed
-archives that hold the same content, or duplicate *content* inside a file. For those,
-see the GUI tools in section 8.
+**Old installers** - `.msi`, `.iso`, `.dmg`, `.pkg`, `.exe` over 50 MB and more
+than 30 days old, in Downloads and on the Desktop. Always `Review`, so they can
+only ever go to the Recycle Bin.
 
-## 2. Safety model
+**Duplicate files** - grouped by size, then by a cheap prefix hash, then by a
+full SHA-256. Only files that agree on all three are duplicates. The copy with
+the shortest path is kept; the rest are offered for removal.
 
-- **Default mode is `Report`** — it only reads files and writes CSV/TXT reports. Nothing is modified.
-- **One copy per duplicate group is always kept.** The script never deletes a group's last file.
-- **`Delete` requires `-Yes`** and, even then, only removes files that have an identical twin elsewhere.
-- **`Quarantine` is the recommended cleanup mode** — extras are *moved*, not deleted, so you can put them back.
-- Skipped by default: `Windows`, `Program Files`, `Program Files (x86)`, `ProgramData`,
-  `AppData`, `$Recycle.Bin`, `System Volume Information`, `Recovery`, `PerfLogs`, `WinSxS`,
-  plus `node_modules`, `.git`, `.svn`, `.hg`.
-- Never follows junctions / symlinks / mount points (prevents loops and "deleting" a link).
-- Skips `pagefile.sys`, `hiberfil.sys`, `swapfile.sys`, `ntuser.dat*` and all zero-byte files.
-- Skips its own report/quarantine folder, so repeat runs don't re-scan them.
-- Files smaller than 1 MB are ignored by default (change with `-MinSizeKB`).
-- Prefers **not** to keep the copy that lives in a `Temp`, `Cache`, `CrashDumps` or `Downloads` folder.
+## Safety rails
 
-## 3. Quick start
+- Nothing is deleted until you tick it and confirm.
+- Permanent delete is refused for anything not graded `Safe`.
+- `Windows`, `Program Files`, `ProgramData`, `AppData`, `System Volume
+  Information`, `$Recycle.Bin` and drive roots are never walked and never
+  deleted.
+- Symbolic links and junctions are never followed.
+- `.git`, `.svn`, `.hg` and `site-packages` are skipped.
+- Every cleanup is written to `%LOCALAPPDATA%\BinDay\history.jsonl` and can be
+  read back inside the app.
+- No admin rights, no account, no network access, no telemetry.
 
-1. Copy `Find-RedundantFiles.ps1` to your Desktop.
-2. Open **Windows PowerShell** (no admin needed): press `Win`, type `powershell`, Enter.
-3. Run this (safe, read-only):
+## Install
 
-```powershell
-cd $env:USERPROFILE\Desktop
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
-.\Find-RedundantFiles.ps1 -Mode Report
-```
+Download **[BinDay-windows.zip](https://github.com/khansarim007/binday/releases/latest/download/BinDay-windows.zip)**,
+unzip it anywhere, and double click `Install.bat`.
 
-4. Read the results:
+That copies the app to `%LOCALAPPDATA%\Programs\BinDay` and adds a Desktop icon
+and a Start menu entry. `Uninstall.bat` removes both again. Nothing outside
+your user profile is touched.
 
-```powershell
-notepad $env:USERPROFILE\Desktop\DiskAudit\summary.txt
-Invoke-Item "$env:USERPROFILE\Desktop\DiskAudit\duplicates.csv"
-```
+You can also just run `BinDay.exe` from the unzipped folder - the installer is
+only a convenience.
 
-5. Only if the report looks right, move the extras out (reversible):
+## Use
 
-```powershell
-.\Find-RedundantFiles.ps1 -Mode Quarantine
-```
+1. Pick the folder to scan (your user profile is pre-filled; several folders
+   can be listed, separated by `;`).
+2. Press **Scan**.
+3. Click an item to read why it is safe, or press **Tick all Safe items**.
+4. Press **Move to Recycle Bin** (recoverable) or **Delete permanently**.
 
-6. Use the space, confirm nothing is broken (a day or two), then delete the bucket:
+`Options` switches the categories on and off and sets the duplicate size floor
+(1 MB, 10 MB, 100 MB or 1 GB) and the installer age limit. **Cleanup history**
+at the bottom of the sidebar shows what was removed in the past and how much
+space that freed.
 
-```powershell
-Remove-Item "$env:USERPROFILE\Desktop\DiskAudit\Quarantine" -Recurse -Force
-```
-
-## 4. Step by step: what actually happens
-
-1. **Walk the folder tree** with a stack-based crawler that skips junctions, excluded
-   folders and access-denied areas instead of crashing on them.
-2. **Group by exact file size.** Files with a unique size cannot have a twin — this
-   throws away most of the work instantly.
-3. **Partial hash** the first 64 KB of the survivors. Cheap, and eliminates files that
-   merely share a size.
-4. **Full SHA-256 hash** only for what's left. At this point, identical hash = identical content.
-5. **Pick the keeper** per group (`-Keep Oldest|Newest|ShortestPath`, default `Oldest`,
-   with a penalty for temp/download locations).
-6. **Act**, according to `-Mode`:
-   - `Report` → write CSVs and stop.
-   - `Quarantine` → `Move-Item` each extra into `DiskAudit\Quarantine\` mirroring its
-     original path (`...\Quarantine\C\Users\you\Downloads\photo.jpg`).
-   - `Delete` → `Remove-Item`, only with `-Yes`.
-
-Every action is logged to `actions.csv`, and failures are logged to `run.log` — nothing
-fails silently.
-
-## 5. Common commands
-
-```powershell
-# Whole user profile, read-only (the default)
-.\Find-RedundantFiles.ps1 -Mode Report
-
-# Just the usual suspects, and include files from 100 KB up
-.\Find-RedundantFiles.ps1 -Path "$env:USERPROFILE\Downloads","$env:USERPROFILE\Pictures","$env:USERPROFILE\Videos" -MinSizeKB 100
-
-# A whole second drive, quarantining extras
-.\Find-RedundantFiles.ps1 -Path 'D:\' -Mode Quarantine
-
-# Keep the newest copy instead of the oldest
-.\Find-RedundantFiles.ps1 -Keep Newest
-
-# Include folders that are excluded by default (e.g. scan a node_modules-heavy dev drive)
-.\Find-RedundantFiles.ps1 -Path 'D:\Code' -ExcludeDir @('Windows','$Recycle.Bin','System Volume Information')
-
-# Permanent delete, after reviewing the report (irreversible)
-.\Find-RedundantFiles.ps1 -Mode Delete -Yes
-```
-
-Run `Get-Help .\Find-RedundantFiles.ps1 -Full` for the full parameter list.
-
-## 6. Reading the reports
-
-- `duplicates.csv` — one row per **redundant copy**: `Path`, `SizeMB`, `SHA256`,
-  `KeptCopy` (what survives), `CopiesInGroup`. Sort by `SizeMB` to attack the big wins first.
-- `largest-files.csv` — biggest files, even when they have no twin. Often the real space hogs.
-- `top-folders.csv` — folders by total size, two levels under each scan root.
-- `summary.txt` — totals: duplicate groups, redundant copies, **reclaimable space**.
-- `actions.csv` / `run.log` — what was moved/deleted/failed.
-
-## 7. Restoring from quarantine
-
-Quarantine mirrors the original path, minus the colon:
+From the command line:
 
 ```
-original:  C:\Users\me\Downloads\holiday.jpg
-moved to:  C:\Users\me\Desktop\DiskAudit\Quarantine\C\Users\me\Downloads\holiday.jpg
+BinDay.exe "C:\dev\my-project"
 ```
 
-To restore one file, cut/paste it back to `C:\Users\me\Downloads\`. To restore everything:
+scans that folder as soon as the window opens.
 
-```powershell
-$q = "$env:USERPROFILE\Desktop\DiskAudit\Quarantine"
-Get-ChildItem $q -Recurse -File | ForEach-Object {
-  $dest = $_.FullName.Substring($q.Length).TrimStart('\') -replace '^([A-Za-z])\\', '$1:\'
-  New-Item -ItemType Directory -Force -Path (Split-Path $dest) | Out-Null
-  if (-not (Test-Path $dest)) { Move-Item $_.FullName $dest }
-}
+## Build it yourself
+
+Needs the .NET SDK (to build and run the tests) and nothing else. The app
+itself only needs the .NET Framework 4.8 that already ships with Windows 10
+1903+ and Windows 11.
+
+```bash
+git clone https://github.com/khansarim007/binday.git
+cd binday
+./build.sh
 ```
 
-## 8. No-script alternatives
+That runs the test harness, builds the exe and refreshes `dist/` and
+`BinDay-windows.zip`.
 
-**Built into Windows**
+## Layout
 
-```powershell
-# Free vs used space per drive
-Get-PSDrive -PSProvider FileSystem | Select-Object Name,
-  @{n='UsedGB';e={[math]::Round($_.Used/1GB,1)}}, @{n='FreeGB';e={[math]::Round($_.Free/1GB,1)}}
-
-# 25 biggest files in your profile
-Get-ChildItem $env:USERPROFILE -Recurse -File -Force -ErrorAction SilentlyContinue |
-  Sort-Object Length -Descending | Select-Object -First 25 FullName,
-  @{n='MB';e={[math]::Round($_.Length/1MB,1)}}
-
-# Duplicate FILE NAMES (fast, approximate - same name is not the same content)
-Get-ChildItem $env:USERPROFILE -Recurse -File -Force -ErrorAction SilentlyContinue |
-  Group-Object Name | Where-Object Count -gt 1 |
-  Sort-Object { ($_.Group | Measure-Object Length -Sum).Sum } -Descending |
-  Select-Object -First 20 Name, Count
+```
+src/Core/Model.cs      data model, safety grades, path guard
+src/Core/Rules.cs      the rule table (what is disposable and why)
+src/Core/Scanner.cs    the scanner and the duplicate finder
+src/Core/Cleaner.cs    recycle bin and permanent delete
+src/Core/History.cs    the cleanup history file and its reader
+src/Ui/Theme.cs        colours, fonts, small control helpers
+src/Ui/MainForm.cs     the main window
+src/Ui/OptionsForm.cs  the options dialog
+src/Ui/HistoryForm.cs  the cleanup history window
+tests/Tests.cs         75 checks over the whole engine
+installer/             Install.bat / Install.ps1 / Uninstall.*
+dist/                  the shippable folder
+docs/                  screenshots of the real window
+site/                  the website (plain HTML, no build step)
+legacy/                the earlier duplicate finder, kept for reference
 ```
 
-- **Settings → System → Storage → Storage Sense / Cleanup recommendations** — Windows' own cleanup (temp files, old updates, Recycle Bin).
-- `cleanmgr` (Disk Cleanup) → *Clean up system files*.
-- **Admin prompt:** `Dism /Online /Cleanup-Image /StartComponentCleanup` reclaims old WinSxS update components.
+The engine has no dependency on WinForms, which is why the test harness can run
+it on any machine (Linux included) and why the rules can be unit tested
+directly.
 
-**Free GUI tools (usually easier than a script)**
+## Tests
 
-| Tool | Best for |
-|---|---|
-| **WizTree** | Fastest disk-usage map (reads the NTFS master file table directly) |
-| **TreeSize Free** | Folder-by-folder size breakdown |
-| **dupeGuru** | Duplicates, including *fuzzy* image/music similarity |
-| **Everything** | Instant search for huge files by name/ext/size |
-| **BleachBit** | Cache/temp cleanup (read its descriptions before ticking boxes) |
-
-## 9. "It's eating my memory too"
-
-Files occupy **disk space**, not RAM. If Task Manager shows high *memory* use, files
-are not the cause (aside from disk cache, which Windows frees on demand). Check:
-
-```powershell
-# Top 15 RAM consumers by process
-Get-Process | Sort-Object WorkingSet64 -Descending |
-  Select-Object -First 15 Name, @{n='RAM_MB';e={[math]::Round($_.WorkingSet64/1MB)}}, Id
+```bash
+dotnet run --project tests -c Release
 ```
 
-Then look at Task Manager → *Startup apps*, and Settings → *System → About* to confirm
-installed RAM. Disk space and RAM are fixed by different actions.
+75 checks covering rule matching, marker files, exclusions, duplicate
+detection, keeper choice, size measurement, the path guard, recycling,
+permanent delete refusals, history output and cancellation.
 
-## 10. Limitations to know
+## Website
 
-- **Hardlinks** (common in WinSxS, and in some backup tools) look like duplicate files
-  but share one copy on disk — deleting one frees nothing. The script may report them.
-- **OneDrive / cloud "online-only" files** appear as normal files. Deleting one deletes
-  your copy and syncs that deletion. Review OneDrive paths carefully.
-- **Re-encoded media** (a photo resized by WhatsApp, an MP4 re-rendered) is not
-  byte-identical and will not be flagged. Use dupeGuru's similarity mode.
-- **Speed:** hashing is I/O-bound. A full `C:\Users\you` scan with lots of media can take
-  a while; run it while idle and start with one or two folders.
-- **Network drives / external USB:** works, but far slower; quarantine moves become real copies.
-- Don't point `-Mode Delete` at `C:\` until you've done a Report run and read the CSV.
+The landing page lives in `site/` and is plain HTML, CSS and one small script -
+no framework, no build step. It is published to GitHub Pages by
+`.github/workflows/pages.yml`.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
+
+The older duplicate finder that came before BinDay is kept in
+[`legacy/`](legacy/README.md) under the same license.
