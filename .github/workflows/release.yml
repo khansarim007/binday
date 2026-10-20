@@ -32,10 +32,9 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist | Out-Null
-          Copy-Item src/bin/Release/net48/BinDay.exe dist/
-          Copy-Item src/bin/Release/net48/BinDay.exe.config dist/
-          Copy-Item installer/Install.bat, installer/Install.ps1, installer/Uninstall.bat, installer/Uninstall.ps1 dist/
-          Copy-Item site/../dist/HOW-TO-INSTALL.txt dist/ -ErrorAction SilentlyContinue
+          Copy-Item src/bin/Release/net48/BinDay.exe dist/ -Force
+          Copy-Item src/bin/Release/net48/BinDay.exe.config dist/ -Force
+          Copy-Item installer/Install.bat, installer/Install.ps1, installer/Uninstall.bat, installer/Uninstall.ps1 dist/ -Force
 
       - name: Zip it up
         shell: pwsh
