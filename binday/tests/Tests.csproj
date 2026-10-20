@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>7.3</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>BinDay.Tests</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Tests.cs" />
+    <Compile Include="../src/Core/Model.cs" />
+    <Compile Include="../src/Core/Rules.cs" />
+    <Compile Include="../src/Core/Scanner.cs" />
+    <Compile Include="../src/Core/Cleaner.cs" />
+  </ItemGroup>
+
+</Project>
