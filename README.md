@@ -10,6 +10,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](LICENSE)
 [![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011-0078D4?logo=windows)](https://learn.microsoft.com/en-us/windows/whats-new/)
 [![Release](https://img.shields.io/github/v/release/khansarim007/binday?label=release)](https://github.com/khansarim007/binday/releases/latest)
+[![Vercel](https://img.shields.io/badge/site-getbinday.vercel.app-000?logo=vercel&logoColor=white)](https://getbinday.vercel.app)
 
 [Download](https://github.com/khansarim007/binday/releases/latest/download/BinDay-windows.zip) &middot;
 [Website](https://getbinday.vercel.app/) &middot;
