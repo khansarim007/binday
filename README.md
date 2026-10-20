@@ -12,7 +12,7 @@
 [![Release](https://img.shields.io/github/v/release/khansarim007/binday?label=release)](https://github.com/khansarim007/binday/releases/latest)
 
 [Download](https://github.com/khansarim007/binday/releases/latest/download/BinDay-windows.zip) &middot;
-[Website](https://khansarim007.github.io/binday/) &middot;
+[Website](https://getbinday.vercel.app/) &middot;
 [Releases](https://github.com/khansarim007/binday/releases)
 
 </div>
@@ -183,7 +183,10 @@ permanent delete refusals, history output and cancellation.
 The landing page lives in [`site/`](site/README.md) and is plain HTML, CSS and
 one small script - no framework, no build step.
 
-**Vercel** (the recommended host):
+**Vercel** - the site is live at **https://getbinday.vercel.app** (project
+`getbinday`; `binday.vercel.app` was already taken by another project).
+
+To redeploy it yourself:
 
 1. Vercel → **Add New → Project** → import `khansarim007/binday`
 2. Framework Preset: `Other`
@@ -196,8 +199,9 @@ You can also set the Root Directory to `site`; `site/vercel.json` covers that
 case. The download button points at the latest GitHub release, so cutting a
 new release updates the site with no change to the page.
 
-**GitHub Pages** works too: `.github/workflows/pages.yml` publishes `site/` to
-`https://khansarim007.github.io/binday/` on every push to `main`.
+**GitHub Pages** works too as a backup host: `.github/workflows/pages.yml`
+publishes `site/` to `https://khansarim007.github.io/binday/` on every push
+to `main`.
 
 ## License
 

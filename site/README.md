@@ -32,6 +32,10 @@ The repository is set up for a one-click import:
 3. **Root Directory:** leave it on the repository root. The `vercel.json` at
    the root of the repository points Vercel at `site/` and skips the build
    step, because there is nothing to build.
+
+   The site is live at **https://getbinday.vercel.app** (project `getbinday`).
+   `binday.vercel.app` is already owned by another project, so Vercel gave
+   this one a clean name instead.
 4. **Deploy.**
 
 If you would rather point Vercel straight at the folder, set **Root
