@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -40,6 +42,7 @@ namespace BinDay.App
         private Button _selectNoneButton;
         private Button _recycleButton;
         private Button _deleteButton;
+        private Button _shortcutButton;
 
         private ToolStripStatusLabel _statusLabel;
         private ToolStripStatusLabel _countLabel;
@@ -270,9 +273,10 @@ namespace BinDay.App
             TableLayoutPanel side = new TableLayoutPanel();
             side.Dock = DockStyle.Fill;
             side.ColumnCount = 1;
-            side.RowCount = 3;
+            side.RowCount = 4;
             side.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
             side.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            side.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
             side.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
             side.Margin = new Padding(0);
 
@@ -301,9 +305,16 @@ namespace BinDay.App
                 }
             };
 
+            _shortcutButton = Ui.FlatButton("Desktop shortcut", Theme.Sidebar, Theme.TextMuted, false);
+            _shortcutButton.Dock = DockStyle.Fill;
+            _shortcutButton.MinimumSize = new Size(0, 30);
+            _shortcutButton.Margin = new Padding(0, 0, 0, 0);
+            _shortcutButton.Click += ShortcutClick;
+
             side.Controls.Add(heading, 0, 0);
             side.Controls.Add(_categoryList, 0, 1);
             side.Controls.Add(historyButton, 0, 2);
+            side.Controls.Add(_shortcutButton, 0, 3);
             sidebar.Controls.Add(side);
 
             Panel card = new Panel();
@@ -1001,6 +1012,76 @@ namespace BinDay.App
         private void SetStatus(string text)
         {
             if (_statusLabel != null) _statusLabel.Text = text;
+        }
+
+        /// <summary>
+        /// Puts a shortcut to this copy of BinDay on the Desktop, so a portable
+        /// download in your Downloads folder is still easy to find later.
+        /// </summary>
+        private void ShortcutClick(object sender, EventArgs e)
+        {
+            try
+            {
+                string exe = Application.ExecutablePath;
+                string folder = Path.GetDirectoryName(exe);
+                string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+
+                if (string.IsNullOrEmpty(desktop))
+                {
+                    desktop = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Desktop");
+                }
+
+                if (string.IsNullOrEmpty(desktop) || !Directory.Exists(desktop))
+                {
+                    MessageBox.Show(this, "The Desktop folder could not be found, so no shortcut was created.",
+                        "BinDay", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                string link = Path.Combine(desktop, "BinDay.lnk");
+                CreateShortcut(link, exe, folder);
+
+                SetStatus("Desktop shortcut created.");
+                MessageBox.Show(this, "A BinDay shortcut was placed on your Desktop.",
+                    "BinDay", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, "The shortcut could not be created:\n\n" + ex.Message,
+                    "BinDay", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private static void CreateShortcut(string linkPath, string target, string workingDirectory)
+        {
+            Type shellType = Type.GetTypeFromProgID("WScript.Shell");
+            if (shellType == null) throw new InvalidOperationException("Windows Script Host is not available.");
+
+            object shell = Activator.CreateInstance(shellType);
+            object shortcut = null;
+
+            try
+            {
+                shortcut = shellType.InvokeMember("CreateShortcut",
+                    BindingFlags.InvokeMethod, null, shell, new object[] { linkPath });
+
+                Type linkType = shortcut.GetType();
+
+                linkType.InvokeMember("TargetPath", BindingFlags.SetProperty, null, shortcut, new object[] { target });
+                linkType.InvokeMember("WorkingDirectory", BindingFlags.SetProperty, null, shortcut, new object[] { workingDirectory });
+                linkType.InvokeMember("IconLocation", BindingFlags.SetProperty, null, shortcut, new object[] { target + ",0" });
+                linkType.InvokeMember("Description", BindingFlags.SetProperty, null, shortcut, new object[] { "Clear the junk, keep the good stuff" });
+                linkType.InvokeMember("Save", BindingFlags.InvokeMethod, null, shortcut, null);
+            }
+            finally
+            {
+                if (shortcut != null)
+                {
+                    try { Marshal.ReleaseComObject(shortcut); } catch (Exception) { }
+                }
+
+                try { Marshal.ReleaseComObject(shell); } catch (Exception) { }
+            }
         }
     }
 }

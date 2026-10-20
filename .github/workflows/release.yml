@@ -47,6 +47,7 @@ jobs:
         run: |
           gh release create "${{ github.ref_name }}" `
             BinDay-windows.zip `
+            dist/BinDay.exe `
             --repo "${{ github.repository }}" `
             --title "BinDay ${{ github.ref_name }}" `
             --generate-notes

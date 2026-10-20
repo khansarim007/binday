@@ -55,7 +55,8 @@ The page links to:
 
 | What | Where |
 |---|---|
-| Download | `https://github.com/khansarim007/binday/releases/latest/download/BinDay-windows.zip` |
+| Download | `https://github.com/khansarim007/binday/releases/latest/download/BinDay.exe` (the app itself)
+| Installer | `https://github.com/khansarim007/binday/releases/latest/download/BinDay-windows.zip` (adds a shortcut and an uninstaller) |
 | Source | `https://github.com/khansarim007/binday` |
 | Canonical URL | the `og:url` and `canonical` tags at the top of `index.html` |
 

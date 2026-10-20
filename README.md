@@ -11,7 +11,7 @@
 [![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011-0078D4?logo=windows)](https://learn.microsoft.com/en-us/windows/whats-new/)
 [![Release](https://img.shields.io/github/v/release/khansarim007/binday?label=release)](https://github.com/khansarim007/binday/releases/latest)
 
-[Download](https://github.com/khansarim007/binday/releases/latest/download/BinDay-windows.zip) &middot;
+[Download](https://github.com/khansarim007/binday/releases/latest/download/BinDay.exe) &middot;
 [Website](https://getbinday.vercel.app/) &middot;
 [Releases](https://github.com/khansarim007/binday/releases)
 
@@ -98,15 +98,25 @@ the shortest path is kept; the rest are offered for removal.
 
 ## Install
 
-Download **[BinDay-windows.zip](https://github.com/khansarim007/binday/releases/latest/download/BinDay-windows.zip)**,
+**The quick way.** Download **[BinDay.exe](https://github.com/khansarim007/binday/releases/latest/download/BinDay.exe)**
+(100 KB) and double-click it. That is the whole app - there is nothing to
+install, and it needs no admin rights. Windows 10 (1903+) and Windows 11 already
+include .NET Framework 4.8.
+
+Running it from your Downloads folder is fine. When you want it to be easy to
+find again, press **Desktop shortcut** at the bottom of the sidebar and BinDay
+puts an icon on your Desktop.
+
+> BinDay is not code-signed, so Windows may show *"Windows protected your PC"*.
+> Choose **More info → Run anyway**.
+
+**The proper way.** Download
+**[BinDay-windows.zip](https://github.com/khansarim007/binday/releases/latest/download/BinDay-windows.zip)**,
 unzip it anywhere, and double click `Install.bat`.
 
 That copies the app to `%LOCALAPPDATA%\Programs\BinDay` and adds a Desktop icon
 and a Start menu entry. `Uninstall.bat` removes both again. Nothing outside
 your user profile is touched.
-
-You can also just run `BinDay.exe` from the unzipped folder - the installer is
-only a convenience.
 
 ## Use
 
