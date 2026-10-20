@@ -180,9 +180,24 @@ permanent delete refusals, history output and cancellation.
 
 ## Website
 
-The landing page lives in `site/` and is plain HTML, CSS and one small script -
-no framework, no build step. It is published to GitHub Pages by
-`.github/workflows/pages.yml`.
+The landing page lives in [`site/`](site/README.md) and is plain HTML, CSS and
+one small script - no framework, no build step.
+
+**Vercel** (the recommended host):
+
+1. Vercel → **Add New → Project** → import `khansarim007/binday`
+2. Framework Preset: `Other`
+3. Leave the Root Directory on the repository root - the root `vercel.json`
+   points Vercel at `site/` and skips the build, because there is nothing to
+   build
+4. **Deploy**
+
+You can also set the Root Directory to `site`; `site/vercel.json` covers that
+case. The download button points at the latest GitHub release, so cutting a
+new release updates the site with no change to the page.
+
+**GitHub Pages** works too: `.github/workflows/pages.yml` publishes `site/` to
+`https://khansarim007.github.io/binday/` on every push to `main`.
 
 ## License
 
