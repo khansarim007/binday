@@ -42,6 +42,7 @@ namespace BinDay.Tests
             Run("permanent cleanup refuses unsafe items", CleanupRefusesUnsafe);
             Run("cleanup refuses protected paths", CleanupRefusesProtected);
             Run("history is written as json", HistoryJson);
+            Run("history can be read back", HistoryRoundTrip);
             Run("cancelling a scan works", Cancellation);
             Run("byte formatting", FormatBytes);
 
@@ -552,6 +553,37 @@ namespace BinDay.Tests
                 Assert.True(line.Contains("\"mode\":\"Recycle\""), "mode recorded");
                 Assert.True(line.Contains("\"bytes\":1234"), "bytes recorded");
                 Assert.True(line.Contains("C:\\\\thing\\\\x"), "path escaped");
+            }
+            finally { Delete(root); }
+        }
+
+        private static void HistoryRoundTrip()
+        {
+            string root = NewTempRoot();
+            try
+            {
+                string file = Path.Combine(root, "history.jsonl");
+
+                CleanupReport report = new CleanupReport();
+                report.Removed = 2;
+                report.BytesFreed = 4096;
+                report.Items.Add(new CleanupItem { Path = "C:\\work\\node_modules", Bytes = 4096, Success = true });
+                report.Items.Add(new CleanupItem { Path = "C:\\work\\target", Bytes = 0, Success = true });
+
+                History.Append(report, DeleteMode.Recycle, null, file);
+
+                List<HistoryEntry> entries = History.ReadAll(file);
+
+                Assert.Equal(1, entries.Count, "one entry");
+                Assert.Equal(2, entries[0].Removed, "removed count");
+                Assert.Equal(4096L, entries[0].Bytes, "bytes");
+                Assert.Equal("Recycle", entries[0].Mode, "mode");
+                Assert.Equal(2, entries[0].Paths.Count, "paths");
+                Assert.True(entries[0].Paths[0].Contains("node_modules"), "path kept");
+                Assert.True(entries[0].At > DateTime.Now.AddMinutes(-5), "timestamp");
+
+                History.Clear(file);
+                Assert.Equal(0, History.ReadAll(file).Count, "history cleared");
             }
             finally { Delete(root); }
         }

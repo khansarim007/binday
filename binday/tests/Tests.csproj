@@ -16,6 +16,7 @@
     <Compile Include="../src/Core/Rules.cs" />
     <Compile Include="../src/Core/Scanner.cs" />
     <Compile Include="../src/Core/Cleaner.cs" />
+    <Compile Include="../src/Core/History.cs" />
   </ItemGroup>
 
 </Project>

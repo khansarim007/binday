@@ -7,6 +7,10 @@ safe to remove, and then waits for you to say yes.
 
 Nothing is deleted on its own. Ever.
 
+![BinDay after a scan](docs/window-scan.png)
+
+![BinDay before a scan](docs/window-empty.png)
+
 ```
 +--------------------------------------------------------------------------+
 |  BinDay                                            12.4 GB               |
@@ -125,6 +129,11 @@ only a convenience.
 `Options` switches the categories on and off and sets the duplicate size floor
 (1 MB, 10 MB, 100 MB or 1 GB) and the installer age limit.
 
+**Cleanup history** (button at the bottom of the sidebar) lists every past
+cleanup: when, what was removed, how much space that freed and how many items
+were skipped. It is stored in `%LOCALAPPDATA%\BinDay\history.jsonl` and can be
+cleared from the same window.
+
 From the command line:
 
 ```
@@ -155,12 +164,15 @@ binday/
   src/Core/Rules.cs      the rule table (what is disposable and why)
   src/Core/Scanner.cs    the scanner and the duplicate finder
   src/Core/Cleaner.cs    recycle bin, permanent delete, cleanup history
+  src/Core/History.cs    the cleanup history file and its reader
   src/Ui/Theme.cs        colours, fonts, small control helpers
-  src/Ui/MainForm.cs     the window
+  src/Ui/MainForm.cs     the main window
   src/Ui/OptionsForm.cs  the options dialog
-  tests/Tests.cs         64 checks over the whole engine
+  src/Ui/HistoryForm.cs  the cleanup history window
+  tests/Tests.cs         75 checks over the whole engine
   installer/             Install.bat / Install.ps1 / Uninstall.*
   dist/                  the shippable folder
+  docs/                  screenshots of the real window
 ```
 
 The engine has no dependency on WinForms, which is why the test harness can run
@@ -174,7 +186,7 @@ cd binday
 dotnet run --project tests -c Release
 ```
 
-64 checks covering rule matching, marker files, exclusions, duplicate
+75 checks covering rule matching, marker files, exclusions, duplicate
 detection, keeper choice, size measurement, the path guard, recycling,
 permanent delete refusals, history output and cancellation.
 

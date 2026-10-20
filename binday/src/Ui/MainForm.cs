@@ -270,9 +270,10 @@ namespace BinDay.App
             TableLayoutPanel side = new TableLayoutPanel();
             side.Dock = DockStyle.Fill;
             side.ColumnCount = 1;
-            side.RowCount = 2;
+            side.RowCount = 3;
             side.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
             side.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            side.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
             side.Margin = new Padding(0);
 
             Label heading = Ui.Label("CATEGORIES", Theme.SmallBold, Theme.TextMuted, false);
@@ -288,8 +289,21 @@ namespace BinDay.App
             _categoryList.IntegralHeight = false;
             _categoryList.SelectedIndexChanged += CategoryChanged;
 
+            Button historyButton = Ui.FlatButton("Cleanup history", Theme.Sidebar, Theme.TextMuted, false);
+            historyButton.Dock = DockStyle.Fill;
+            historyButton.MinimumSize = new Size(0, 30);
+            historyButton.Margin = new Padding(0, 8, 0, 0);
+            historyButton.Click += delegate
+            {
+                using (HistoryForm form = new HistoryForm())
+                {
+                    form.ShowDialog(this);
+                }
+            };
+
             side.Controls.Add(heading, 0, 0);
             side.Controls.Add(_categoryList, 0, 1);
+            side.Controls.Add(historyButton, 0, 2);
             sidebar.Controls.Add(side);
 
             Panel card = new Panel();

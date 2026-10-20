@@ -26,6 +26,8 @@ FIRST RUN
   - Press "Move to Recycle Bin" (recoverable) or "Delete permanently".
   - Only items marked Safe can be deleted permanently. Everything else is
     refused on purpose.
+  - "Cleanup history" at the bottom of the sidebar shows what was removed in
+    the past and how much space that freed.
 
 ALSO WORKS FROM THE COMMAND LINE
   BinDay.exe "C:\path\to\folder"
