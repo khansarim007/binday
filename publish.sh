@@ -89,3 +89,21 @@ cat <<TXT
   Download: https://github.com/$REPO/releases/latest/download/BinDay-windows.zip
 
 TXT
+
+# ---------------------------------------------------------------- Vercel (optional)
+#
+# If VERCEL_TOKEN is set, the site is published to Vercel as well. The token
+# comes from Vercel -> Account Settings -> Tokens. Leave it unset and import
+# the repository in the Vercel dashboard instead - the vercel.json in the
+# repository root does the rest.
+
+if [ -n "${VERCEL_TOKEN:-}" ]; then
+    echo
+    echo "== deploying to Vercel =="
+    if command -v npx >/dev/null 2>&1; then
+        npx --yes vercel@latest --prod --yes --token "$VERCEL_TOKEN" --name "$(basename "$REPO")" || \
+            echo "  the Vercel deploy failed - check the token and the project name"
+    else
+        echo "  npx is needed for the Vercel CLI"
+    fi
+fi
