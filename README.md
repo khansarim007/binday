@@ -12,6 +12,15 @@ BinDay is the newest of the three and the one to start with: it covers
 duplicates *and* everything else that is disposable, in a window that explains
 what it found before you touch anything.
 
+### Get it
+
+Download **`BinDay-windows.zip`** (35 KB) from the
+[releases page](https://github.com/khansarim007/directory/releases/tag/v1.0.0),
+unzip it anywhere, and double click `Install.bat`. You get a Desktop icon and
+a Start menu entry. No admin rights, no runtime download.
+
+Or clone the repo and run `binday/build.sh` to build it yourself.
+
 ---
 
 ## Redundant File Finder (script and app)
