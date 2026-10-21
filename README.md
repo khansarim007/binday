@@ -22,8 +22,9 @@
 
 BinDay is a small native Windows app that finds the things your machine does not
 need any more - build output, dependency folders, package caches, temp files,
-old installers and duplicate files - shows you exactly what it found and **why it
-is safe to remove**, and then waits for you to say yes.
+old installers, duplicate files, oversized videos and photos, leftover app
+packages and redundant copies of the same installer - and then explains every
+single one of them before you touch anything.
 
 **Nothing is deleted on its own. Ever.**
 
@@ -84,6 +85,31 @@ only ever go to the Recycle Bin.
 full SHA-256. Only files that agree on all three are duplicates. The copy with
 the shortest path is kept; the rest are offered for removal.
 
+**Big media** - videos, photos, audio files and Android/app packages above a
+size floor (25 MB by default). These are *your* files, so BinDay never calls
+them junk: they are graded `Review`, they can only go to the Recycle Bin, and
+the panel says so in as many words.
+
+**Any very large file** - a single file over 300 MB, whatever it is, listed so
+you can decide.
+
+**Redundant installs** - several copies of the same installer in your
+Downloads folder. The newest one is kept and the older ones are offered, so
+`VLC-3.0.18-win64.exe` never sits next to `VLC-3.0.20-win64.exe` forever.
+
+## The window
+
+| | |
+|---|---|
+| **Collections rail** | Every category with a live count and size. Click one to filter the list. |
+| **Four view modes** | Large cards, medium cards, a compact list and a sortable details table. |
+| **Sorting** | By size, name, date, safety, collection or file count, ascending or descending. |
+| **Inspector** | Select anything and read exactly what it is, what would happen if you removed it, and how to get it back. |
+| **Two removal modes** | Recycle Bin (restorable) or permanent delete, which the engine only allows for `Safe` items. |
+| **Review screen** | A final list of what is about to happen, before anything is touched. |
+
+Your view and sort choices are remembered between runs.
+
 ## Safety rails
 
 - Nothing is deleted until you tick it and confirm.
@@ -100,12 +126,12 @@ the shortest path is kept; the rest are offered for removal.
 ## Install
 
 **The quick way.** Download **[BinDay.exe](https://github.com/khansarim007/binday/releases/latest/download/BinDay.exe)**
-(100 KB) and double-click it. That is the whole app - there is nothing to
+(180 KB) and double-click it. That is the whole app - there is nothing to
 install, and it needs no admin rights. Windows 10 (1903+) and Windows 11 already
 include .NET Framework 4.8.
 
 Running it from your Downloads folder is fine. When you want it to be easy to
-find again, press **Desktop shortcut** at the bottom of the sidebar and BinDay
+find again, open the `...` menu and press **Create desktop shortcut** - BinDay
 puts an icon on your Desktop.
 
 > BinDay is not code-signed, so Windows may show *"Windows protected your PC"*.
@@ -122,15 +148,21 @@ your user profile is touched.
 ## Use
 
 1. Pick the folder to scan (your user profile is pre-filled; several folders
-   can be listed, separated by `;`).
-2. Press **Scan**.
-3. Click an item to read why it is safe, or press **Tick all Safe items**.
-4. Press **Move to Recycle Bin** (recoverable) or **Delete permanently**.
+   can be listed, separated by `;`) and press **Scan**.
+2. Pick a collection on the left - *Dev junk*, *Caches*, *Videos*, *App
+   packages*, *Redundant installs* and so on - or stay on **All items**.
+3. Switch between the large cards, the compact list and the sortable details
+   table with the buttons on the right.
+4. Click an item. The panel on the right tells you what it is, what would
+   happen if you removed it, and how to get it back.
+5. Tick what you want (the tick box on the card, **Space**, or **Tick for
+   cleanup** in the panel).
+6. Choose **Recycle Bin** or **Delete permanently**, then press the big button.
+   A review screen lists everything one last time before it happens.
 
-`Options` switches the categories on and off and sets the duplicate size floor
-(1 MB, 10 MB, 100 MB or 1 GB) and the installer age limit. **Cleanup history**
-at the bottom of the sidebar shows what was removed in the past and how much
-space that freed.
+`Scan options` (the `...` menu) switches the categories on and off and sets the
+size floors for duplicates, media and large files. **Cleanup history** shows
+what was removed in the past and how much space that freed.
 
 From the command line:
 
@@ -163,11 +195,17 @@ src/Core/Rules.cs      the rule table (what is disposable and why)
 src/Core/Scanner.cs    the scanner and the duplicate finder
 src/Core/Cleaner.cs    recycle bin and permanent delete
 src/Core/History.cs    the cleanup history file and its reader
-src/Ui/Theme.cs        colours, fonts, small control helpers
+src/Ui/Theme.cs        colours, fonts, buttons, small control helpers
+src/Ui/Glyphs.cs       the hand-drawn icons used across the app
 src/Ui/MainForm.cs     the main window
+src/Ui/CategoryRail.cs the collections sidebar
+src/Ui/FindingGrid.cs  the card, list and details views
+src/Ui/Inspector.cs    the panel that explains every item
+src/Ui/ConfirmForm.cs  the review screen before anything is removed
+src/Ui/Thumbnails.cs   Explorer-style previews for photos and videos
 src/Ui/OptionsForm.cs  the options dialog
 src/Ui/HistoryForm.cs  the cleanup history window
-tests/Tests.cs         75 checks over the whole engine
+tests/Tests.cs         101 checks over the whole engine
 installer/             Install.bat / Install.ps1 / Uninstall.*
 dist/                  the shippable folder
 docs/                  screenshots of the real window
@@ -185,9 +223,10 @@ directly.
 dotnet run --project tests -c Release
 ```
 
-75 checks covering rule matching, marker files, exclusions, duplicate
-detection, keeper choice, size measurement, the path guard, recycling,
-permanent delete refusals, history output and cancellation.
+101 checks covering rule matching, marker files, exclusions, duplicate
+detection, keeper choice, media and redundant-installer detection, size
+measurement, the path guard, recycling, permanent delete refusals, the wording
+the app uses to explain an item, history output and cancellation.
 
 ## Website
 

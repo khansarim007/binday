@@ -12,9 +12,9 @@
     <Product>BinDay</Product>
     <AssemblyTitle>BinDay</AssemblyTitle>
     <Company>BinDay</Company>
-    <Description>Windows disk cleaner: finds build junk, caches, old installers and duplicate files, then waits for you to say yes.</Description>
-    <Version>1.0.0</Version>
-    <FileVersion>1.0.0.0</FileVersion>
+    <Description>Windows disk cleaner: finds build junk, caches, old installers, duplicates, big media and leftover app packages, explains every item, then waits for you to say yes.</Description>
+    <Version>1.1.0</Version>
+    <FileVersion>1.1.0.0</FileVersion>
 
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>

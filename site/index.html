@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BinDay - free up space on your Windows PC</title>
-<meta name="description" content="BinDay is a small native Windows app that finds build junk, package caches, temp files, old installers and duplicate files, then asks before it removes anything.">
+<meta name="description" content="BinDay is a small native Windows app that finds build junk, package caches, temp files, old installers, duplicate files, oversized videos and leftover app packages, explains every item, then asks before it removes anything.">
 <meta name="theme-color" content="#0b0f14">
 <meta property="og:type" content="website">
 <meta property="og:title" content="BinDay - free up space on your Windows PC">
-<meta property="og:description" content="Finds build junk, caches, temp files, old installers and duplicates. Nothing is deleted until you tick it and confirm.">
+<meta property="og:description" content="Finds build junk, caches, temp files, old installers, duplicates, big videos and leftover app packages, then explains every single one. Nothing is deleted until you tick it and confirm.">
 <meta property="og:image" content="https://getbinday.vercel.app/assets/og.png">
 <meta property="og:url" content="https://getbinday.vercel.app/">
 <meta name="twitter:card" content="summary_large_image">
@@ -41,13 +41,14 @@
   <section class="hero" id="top">
     <div class="wrap hero-inner">
       <div class="hero-copy">
-        <p class="eyebrow">Native Windows app &middot; 100&nbsp;KB &middot; no admin rights</p>
+        <p class="eyebrow">Native Windows app &middot; 180&nbsp;KB &middot; no admin rights</p>
         <h1>Free up space<br>on your PC.</h1>
         <p class="lede">
           BinDay finds the stuff your machine does not need any more &mdash; build output,
-          dependency folders, package caches, temp files, old installers and duplicate
-          files &mdash; shows you exactly what it found and why it is safe to remove,
-          and then waits for you to say yes.
+          dependency folders, package caches, temp files, old installers, duplicate files,
+          oversized videos and photos, leftover app packages &mdash; and then explains
+          every single one of them: what it is, what would happen if you removed it, and
+          how to get it back. You tick what you want, and it waits for you to say yes.
         </p>
         <p class="hero-actions">
           <a class="btn btn-primary" href="https://github.com/khansarim007/binday/releases/latest/download/BinDay.exe" download>
@@ -74,7 +75,7 @@
       </div>
 
       <div class="hero-art">
-        <img class="shot" src="assets/screenshot.png" alt="The BinDay window listing six items it found, with sizes and safety grades." width="1120" height="790">
+        <img class="shot" src="assets/screenshot.png" alt="The BinDay window listing the items it found as large cards, with the panel on the right explaining exactly what would happen if you removed the selected one." width="1280" height="830">
       </div>
     </div>
   </section>
@@ -83,8 +84,9 @@
     <div class="wrap">
       <h2>What it finds</h2>
       <p class="section-lede">
-        Each item comes with its size and a plain sentence explaining what removing it
-        means. If it cannot prove an item is disposable, it stays out of the list.
+        Each item comes with its size, its collection, and a plain sentence explaining
+        what removing it means. If it cannot prove an item is disposable, it stays out
+        of the list.
       </p>
 
       <div class="grid">
@@ -117,6 +119,34 @@
              50&nbsp;MB and more than 30 days old, in Downloads and on the Desktop.</p>
           <p class="card-note">Always graded <em>Review</em>, so they can only ever go to
              the Recycle Bin.</p>
+        </article>
+
+        <article class="card">
+          <h3>Big videos, photos and audio</h3>
+          <p>Media files over the size floor you choose, with real Explorer-style
+             thumbnails so you can recognise them at a glance.</p>
+          <p class="card-note">These are your own files, so BinDay never calls them
+             junk. They are graded <em>Review</em> and can only go to the Recycle
+             Bin.</p>
+        </article>
+
+        <article class="card">
+          <h3>Leftover app packages</h3>
+          <p><code>.apk</code>, <code>.xapk</code>, <code>.aab</code> and friends left
+             lying around after you installed the app somewhere else.</p>
+          <p class="card-note">Graded <em>Review</em>, Recycle Bin only.</p>
+        </article>
+
+        <article class="card">
+          <h3>Redundant installs</h3>
+          <p>Several copies of the same installer in your Downloads folder. The newest
+             one is kept, the older ones are offered.</p>
+        </article>
+
+        <article class="card">
+          <h3>Any very large file</h3>
+          <p>A single file over 300&nbsp;MB, whatever it is, listed so you can decide
+             whether it still earns its place.</p>
         </article>
 
         <article class="card">
@@ -183,15 +213,23 @@
         </div>
         <div class="step">
           <span class="step-number">2</span>
-          <h3>Read the list</h3>
-          <p>Every finding shows its size, where it is, and why it is safe. Click one
-             to see the proof.</p>
+          <h3>Browse the collections</h3>
+          <p>Dev junk, caches, videos, photos, app packages, redundant installs and
+             more &mdash; each with a live count and size. Sort by size, name or date,
+             in big cards or a details table.</p>
         </div>
         <div class="step">
           <span class="step-number">3</span>
+          <h3>Read what would happen</h3>
+          <p>Select an item and the panel tells you what it is, exactly what would be
+             removed, and how to get it back if you are wrong.</p>
+        </div>
+        <div class="step">
+          <span class="step-number">4</span>
           <h3>Tick and confirm</h3>
           <p>Move the ticked items to the Recycle Bin, or delete the safe ones for
-             good. Either way, you decide.</p>
+             good. A final review screen lists everything first. Either way, you
+             decide.</p>
         </div>
       </div>
 

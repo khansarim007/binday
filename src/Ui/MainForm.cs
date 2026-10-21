@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Globalization;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -15,43 +16,47 @@ namespace BinDay.App
     public sealed class MainForm : Form
     {
         private readonly List<Finding> _findings = new List<Finding>();
-        private readonly List<Finding> _visible = new List<Finding>();
-        private readonly HashSet<string> _checked = new HashSet<string>(StringComparer.Ordinal);
+        private List<Finding> _visible = new List<Finding>();
 
-        private readonly Category?[] _categories = new Category?[]
-        {
-            null, Category.Dev, Category.Cache, Category.Temp, Category.Installer, Category.Duplicate
-        };
+        private CategoryRail _rail;
+        private FindingGrid _grid;
+        private Inspector _inspector;
+        private EmptyState _empty;
 
-        private TextBox _rootsBox;
-        private Button _browseButton;
-        private Button _scanButton;
-        private Button _cancelButton;
-        private Button _optionsButton;
+        private Panel _pathPanel;
+        private TextBox _pathBox;
+        private PillButton _scanButton;
+        private PillButton _browseButton;
+        private PillButton _moreButton;
 
-        private Label _headerNumber;
-        private Label _headerCaption;
-        private ListBox _categoryList;
-        private ListView _list;
-        private Label _detailTitle;
-        private Label _detailMeta;
-        private Label _detailWhy;
-        private Label _detailProject;
-        private Label _emptyState;
-        private Button _selectSafeButton;
-        private Button _selectNoneButton;
-        private Button _recycleButton;
-        private Button _deleteButton;
-        private Button _shortcutButton;
+        private Label _titleLabel;
+        private Label _blurbLabel;
+        private Label _metaLabel;
+        private PillButton _sortButton;
+        private PillButton _directionButton;
+        private readonly Dictionary<GridView, PillButton> _viewButtons = new Dictionary<GridView, PillButton>();
 
-        private ToolStripStatusLabel _statusLabel;
-        private ToolStripStatusLabel _countLabel;
-        private ToolStripProgressBar _stripProgress;
+        private Label _tickedLabel;
+        private Label _hintLabel;
+        private PillButton _modeRecycle;
+        private PillButton _modePermanent;
+        private PillButton _cleanButton;
+        private PillButton _clearButton;
+        private PillButton _safeButton;
+
+        private Label _statusLabel;
+        private Label _countLabel;
+        private PulseBar _pulse;
 
         private CancellationTokenSource _cts;
-        private bool _binding;
         private bool _busy;
+        private bool _scanned;
         private ScanOptions _options = new ScanOptions();
+        private DeleteMode _mode = DeleteMode.Recycle;
+        private GridView _view = GridView.Large;
+        private SortField _sort = SortField.Size;
+        private bool _descending = true;
+
         private readonly string[] _startPaths;
 
         public MainForm(string[] args)
@@ -63,458 +68,693 @@ namespace BinDay.App
             BackColor = Theme.Background;
             ForeColor = Theme.Text;
             StartPosition = FormStartPosition.CenterScreen;
-            MinimumSize = new Size(980, 660);
-            ClientSize = new Size(1120, 780);
-            AutoScaleMode = AutoScaleMode.Dpi;
+            MinimumSize = new Size(1060, 700);
+            ClientSize = new Size(1280, 830);
 
             try
             {
-                Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+                Rectangle area = Screen.PrimaryScreen.WorkingArea;
+                if (area.Width > 0 && area.Height > 0)
+                {
+                    int width = Math.Min(1280, area.Width - 40);
+                    int height = Math.Min(830, area.Height - 40);
+                    if (width >= 1060 && height >= 700) ClientSize = new Size(width, height);
+                }
             }
+            catch (Exception) { }
+            AutoScaleMode = AutoScaleMode.Dpi;
+            KeyPreview = true;
+            DoubleBuffered = true;
+
+            try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); }
             catch (Exception) { }
 
             BuildUi();
+            LoadPreferences();
+
+            string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            if (!string.IsNullOrEmpty(profile)) _pathBox.Text = profile;
+
+            if (_pathBox != null)
+            {
+                _pathBox.SelectionStart = _pathBox.TextLength;
+                _pathBox.SelectionLength = 0;
+            }
+
+            RefreshCategories();
+            ApplyFilter(false);
+            SetStatus("Ready. Choose a folder, then press Scan.");
         }
+
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            ApplyDarkTitleBar();
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+
+            try { ActiveControl = _grid; } catch (Exception) { }
+
+            if (_startPaths.Length > 0)
+            {
+                _pathBox.Text = string.Join(";", _startPaths);
+                ScanClick(this, EventArgs.Empty);
+            }
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            SavePreferences();
+            if (_cts != null) _cts.Cancel();
+            base.OnFormClosing(e);
+        }
+
+        private void ApplyDarkTitleBar()
+        {
+            try
+            {
+                int enabled = 1;
+                DwmSetWindowAttribute(Handle, 20, ref enabled, sizeof(int));
+                DwmSetWindowAttribute(Handle, 19, ref enabled, sizeof(int));
+            }
+            catch (Exception) { }
+        }
+
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
+
+        // ------------------------------------------------------------------ ui
 
         private void BuildUi()
         {
             TableLayoutPanel root = new TableLayoutPanel();
             root.Dock = DockStyle.Fill;
             root.ColumnCount = 1;
-            root.RowCount = 6;
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 104));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 56));
+            root.RowCount = 5;
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 76));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 58));
             root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 132));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 84));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
             root.Margin = new Padding(0);
             root.Padding = new Padding(0);
+            root.BackColor = Theme.Background;
 
-            root.Controls.Add(BuildHeader(), 0, 0);
-            root.Controls.Add(BuildScanBar(), 0, 1);
-            root.Controls.Add(BuildMiddle(), 0, 2);
-            root.Controls.Add(BuildDetail(), 0, 3);
-            root.Controls.Add(BuildActionBar(), 0, 4);
-            root.Controls.Add(BuildStatusStrip(), 0, 5);
+            root.Controls.Add(BuildTopBar(), 0, 0);
+            root.Controls.Add(BuildToolbar(), 0, 1);
+            root.Controls.Add(BuildContent(), 0, 2);
+            root.Controls.Add(BuildActionBar(), 0, 3);
+            root.Controls.Add(BuildStatusBar(), 0, 4);
 
             Controls.Add(root);
-
-            string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            if (!string.IsNullOrEmpty(profile)) _rootsBox.Text = profile;
-
-            PopulateCategories();
-            BindList();
-            UpdateHeader();
-            SetStatus("Ready. Pick a folder and press Scan.");
         }
 
-        protected override void OnShown(EventArgs e)
-        {
-            base.OnShown(e);
-            ListResized(this, EventArgs.Empty);
-
-            // "BinDay.exe C:\some\folder" scans that folder straight away.
-            if (_startPaths.Length > 0)
-            {
-                _rootsBox.Text = string.Join(";", _startPaths);
-                ScanClick(this, EventArgs.Empty);
-            }
-        }
-
-        // ---------------------------------------------------------------- header
-
-        private Control BuildHeader()
-        {
-            Panel header = new Panel();
-            header.Dock = DockStyle.Fill;
-            header.BackColor = Theme.Header;
-
-            TableLayoutPanel columns = new TableLayoutPanel();
-            columns.Dock = DockStyle.Fill;
-            columns.ColumnCount = 2;
-            columns.RowCount = 1;
-            columns.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            columns.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 280));
-            columns.Margin = new Padding(0);
-            columns.Padding = new Padding(24, 0, 28, 0);
-
-            TableLayoutPanel brand = new TableLayoutPanel();
-            brand.Dock = DockStyle.Fill;
-            brand.ColumnCount = 1;
-            brand.RowCount = 2;
-            brand.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
-            brand.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
-            brand.Margin = new Padding(0);
-            brand.Padding = new Padding(0, 20, 0, 0);
-
-            Label title = Ui.Label("BinDay", Theme.Brand, Theme.HeaderText, false);
-            title.Dock = DockStyle.Fill;
-            title.TextAlign = ContentAlignment.MiddleLeft;
-
-            Label subtitle = Ui.Label("Clear the junk, keep the good stuff.", Theme.Small, Theme.HeaderMuted, false);
-            subtitle.Dock = DockStyle.Fill;
-            subtitle.TextAlign = ContentAlignment.MiddleLeft;
-
-            brand.Controls.Add(title, 0, 0);
-            brand.Controls.Add(subtitle, 0, 1);
-
-            TableLayoutPanel numbers = new TableLayoutPanel();
-            numbers.Dock = DockStyle.Fill;
-            numbers.ColumnCount = 1;
-            numbers.RowCount = 2;
-            numbers.RowStyles.Add(new RowStyle(SizeType.Percent, 62));
-            numbers.RowStyles.Add(new RowStyle(SizeType.Percent, 38));
-            numbers.Margin = new Padding(0);
-            numbers.Padding = new Padding(0);
-
-            _headerNumber = Ui.Label("0 B", Theme.Huge, Theme.Accent, false);
-            _headerNumber.Dock = DockStyle.Fill;
-            _headerNumber.TextAlign = ContentAlignment.MiddleRight;
-
-            _headerCaption = Ui.Label("nothing to clean yet", Theme.Small, Theme.HeaderMuted, false);
-            _headerCaption.Dock = DockStyle.Fill;
-            _headerCaption.TextAlign = ContentAlignment.MiddleRight;
-
-            numbers.Controls.Add(_headerNumber, 0, 0);
-            numbers.Controls.Add(_headerCaption, 0, 1);
-
-            columns.Controls.Add(brand, 0, 0);
-            columns.Controls.Add(numbers, 1, 0);
-
-            header.Controls.Add(columns);
-            return header;
-        }
-
-        // -------------------------------------------------------------- scan bar
-
-        private Control BuildScanBar()
+        private Control BuildTopBar()
         {
             Panel bar = new Panel();
             bar.Dock = DockStyle.Fill;
-            bar.BackColor = Theme.Surface;
-            bar.Padding = new Padding(16, 11, 16, 11);
+            bar.BackColor = Theme.Header;
+            bar.Paint += delegate (object sender, PaintEventArgs e)
+            {
+                using (SolidBrush brush = new SolidBrush(Theme.Header))
+                {
+                    e.Graphics.FillRectangle(brush, bar.ClientRectangle);
+                }
+
+                using (Pen pen = new Pen(Theme.LineSoft, 1f))
+                {
+                    e.Graphics.DrawLine(pen, 0, bar.Height - 1, bar.Width, bar.Height - 1);
+                }
+            };
+
+            TableLayoutPanel row = new TableLayoutPanel();
+            row.Dock = DockStyle.Fill;
+            row.ColumnCount = 3;
+            row.RowCount = 1;
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300));
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 250));
+            row.Padding = new Padding(22, 0, 18, 0);
+            row.Margin = new Padding(0);
+
+            row.Controls.Add(BuildBrand(), 0, 0);
+            row.Controls.Add(BuildPathField(), 1, 0);
+
+            FlowLayoutPanel buttons = new FlowLayoutPanel();
+            buttons.Dock = DockStyle.Fill;
+            buttons.FlowDirection = FlowDirection.RightToLeft;
+            buttons.WrapContents = false;
+            buttons.Padding = new Padding(0, 20, 0, 0);
+            buttons.Margin = new Padding(0);
+
+            _moreButton = new PillButton();
+            _moreButton.Text = "...";
+            _moreButton.Style = PillButton.Kind.Ghost;
+            _moreButton.Width = 40;
+            _moreButton.Height = 36;
+            _moreButton.Margin = new Padding(6, 0, 0, 0);
+            _moreButton.Click += MoreClick;
+
+            _scanButton = new PillButton();
+            _scanButton.Text = "Scan";
+            _scanButton.Style = PillButton.Kind.Solid;
+            _scanButton.Font = Theme.Medium;
+            _scanButton.Width = 96;
+            _scanButton.Height = 36;
+            _scanButton.Margin = new Padding(6, 0, 0, 0);
+            _scanButton.Click += ScanClick;
+
+            _browseButton = new PillButton();
+            _browseButton.Text = "Browse";
+            _browseButton.Style = PillButton.Kind.Outline;
+            _browseButton.Width = 94;
+            _browseButton.Height = 36;
+            _browseButton.Margin = new Padding(0, 0, 0, 0);
+            _browseButton.Click += BrowseClick;
+
+            buttons.Controls.Add(_moreButton);
+            buttons.Controls.Add(_scanButton);
+            buttons.Controls.Add(_browseButton);
+
+            row.Controls.Add(buttons, 2, 0);
+            bar.Controls.Add(row);
+            return bar;
+        }
+
+        private Control BuildBrand()
+        {
+            TableLayoutPanel brand = new TableLayoutPanel();
+            brand.Dock = DockStyle.Fill;
+            brand.ColumnCount = 2;
+            brand.RowCount = 1;
+            brand.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 46));
+            brand.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            brand.Margin = new Padding(0);
+            brand.Padding = new Padding(0, 18, 0, 12);
+
+            Panel mark = new Panel();
+            mark.Dock = DockStyle.Fill;
+            mark.Margin = new Padding(0, 0, 8, 8);
+            mark.Paint += delegate (object sender, PaintEventArgs e)
+            {
+                Graphics g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+
+                Rectangle tile = new Rectangle(0, 0, Math.Min(mark.Width - 2, 34), Math.Min(mark.Height - 2, 34));
+                Ink.FillRounded(g, tile, 10, Theme.AccentSoft);
+                Ink.OutlineRounded(g, tile, 10, Theme.AccentDark, 1f);
+
+                using (Pen pen = new Pen(Theme.Accent, 2f))
+                {
+                    pen.StartCap = LineCap.Round;
+                    pen.EndCap = LineCap.Round;
+
+                    g.DrawLine(pen, tile.Left + 10, tile.Top + 10, tile.Right - 10, tile.Top + 10);
+                    g.DrawLine(pen, tile.Left + 14, tile.Top + 7, tile.Right - 14, tile.Top + 7);
+
+                    g.DrawLines(pen, new[]
+                    {
+                        new PointF(tile.Left + 11, tile.Top + 14),
+                        new PointF(tile.Left + 13, tile.Bottom - 8),
+                        new PointF(tile.Right - 13, tile.Bottom - 8),
+                        new PointF(tile.Right - 11, tile.Top + 14)
+                    });
+
+                    g.DrawLine(pen, tile.Left + 16, tile.Top + 18, tile.Left + 17, tile.Bottom - 12);
+                    g.DrawLine(pen, tile.Right - 16, tile.Top + 18, tile.Right - 17, tile.Bottom - 12);
+                }
+            };
+
+            TableLayoutPanel words = new TableLayoutPanel();
+            words.Dock = DockStyle.Fill;
+            words.ColumnCount = 1;
+            words.RowCount = 2;
+            words.RowStyles.Add(new RowStyle(SizeType.Absolute, 27));
+            words.RowStyles.Add(new RowStyle(SizeType.Absolute, 17));
+            words.Margin = new Padding(0, 1, 0, 0);
+
+            Label name = Ui.Label("BinDay", Theme.Brand, Theme.Text, false);
+            name.Dock = DockStyle.Fill;
+            name.TextAlign = ContentAlignment.BottomLeft;
+
+            Label tagline = Ui.Label("Clear the junk, keep the good stuff.", Theme.Tiny, Theme.TextDim, false);
+            tagline.Dock = DockStyle.Fill;
+            tagline.TextAlign = ContentAlignment.TopLeft;
+
+            words.Controls.Add(name, 0, 0);
+            words.Controls.Add(tagline, 0, 1);
+
+            brand.Controls.Add(mark, 0, 0);
+            brand.Controls.Add(words, 1, 0);
+            return brand;
+        }
+
+        private Control BuildPathField()
+        {
+            _pathPanel = new Panel();
+            _pathPanel.Dock = DockStyle.Fill;
+            _pathPanel.BackColor = Theme.SurfaceAlt;
+            _pathPanel.Margin = new Padding(0, 20, 0, 20);
+            _pathPanel.Paint += delegate (object sender, PaintEventArgs e)
+            {
+                Graphics g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+
+                using (SolidBrush background = new SolidBrush(Theme.SurfaceAlt))
+                {
+                    g.FillRectangle(background, ClientRectangle);
+                }
+
+                Ink.OutlineRounded(g, new Rectangle(0, 0, _pathPanel.Width - 1, _pathPanel.Height - 1), 9, Theme.Line, 1f);
+                Glyphs.Draw(g, ItemKind.Folder, new Rectangle(12, 10, 16, 16), Theme.TextMuted);
+
+
+
+                if (_pathBox != null && _pathBox.TextLength == 0 && !_pathBox.Focused)
+                {
+                    Ink.Text(g, "Type a folder to scan, or press Browse", Theme.Small, Theme.TextDim,
+                        new Rectangle(38, 0, _pathPanel.Width - 48, _pathPanel.Height),
+                        TextFormatFlags.Left | TextFormatFlags.VerticalCenter);
+                }
+            };
+
+            _pathPanel.Padding = new Padding(38, 11, 12, 9);
+
+            _pathBox = new TextBox();
+            _pathBox.Dock = DockStyle.Fill;
+            _pathBox.BorderStyle = BorderStyle.None;
+            _pathBox.BackColor = Theme.SurfaceAlt;
+            _pathBox.ForeColor = Theme.Text;
+            _pathBox.Font = Theme.Body;
+            _pathBox.TextChanged += delegate
+            {
+                if (!_busy) SetStatus("Press Scan to look inside these folders.");
+                _pathPanel.Invalidate();
+            };
+            _pathBox.GotFocus += delegate
+            {
+                _pathPanel.Invalidate();
+                if (_pathBox.SelectionLength > 0) _pathBox.SelectionLength = 0;
+            };
+            _pathBox.LostFocus += delegate { _pathPanel.Invalidate(); };
+            _pathBox.KeyDown += delegate (object sender, KeyEventArgs e)
+            {
+                if (e.KeyCode == Keys.Enter)
+                {
+                    e.SuppressKeyPress = true;
+                    ScanClick(this, EventArgs.Empty);
+                }
+            };
+
+            _pathPanel.Controls.Add(_pathBox);
+            _pathPanel.Resize += delegate
+            {
+                Control bar = _pathPanel.Parent != null && _pathPanel.Parent.Parent != null
+                    ? _pathPanel.Parent.Parent
+                    : null;
+                if (bar != null) bar.Invalidate();
+                _pathPanel.Invalidate();
+
+                using (GraphicsPath path = Ink.Rounded(new Rectangle(0, 0, _pathPanel.Width, _pathPanel.Height), 9))
+                {
+                    Region old = _pathPanel.Region;
+                    _pathPanel.Region = new Region(path);
+                    if (old != null) old.Dispose();
+                }
+            };
+
+            return _pathPanel;
+        }
+
+        private Control BuildToolbar()
+        {
+            Panel bar = new Panel();
+            bar.Dock = DockStyle.Fill;
+            bar.BackColor = Theme.Background;
+            bar.Paint += delegate (object sender, PaintEventArgs e)
+            {
+                using (SolidBrush brush = new SolidBrush(Theme.Header))
+                {
+                    e.Graphics.FillRectangle(brush, bar.ClientRectangle);
+                }
+
+                using (Pen pen = new Pen(Theme.LineSoft, 1f))
+                {
+                    e.Graphics.DrawLine(pen, 0, bar.Height - 1, bar.Width, bar.Height - 1);
+                }
+            };
 
             TableLayoutPanel row = new TableLayoutPanel();
             row.Dock = DockStyle.Fill;
             row.ColumnCount = 2;
             row.RowCount = 1;
             row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 380));
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 560));
+            row.Padding = new Padding(24, 6, 16, 6);
             row.Margin = new Padding(0);
 
-            _rootsBox = new TextBox();
-            _rootsBox.Dock = DockStyle.Fill;
-            _rootsBox.Margin = new Padding(0, 1, 8, 1);
-            Ui.ConfigureTextBox(_rootsBox);
-            _rootsBox.TextChanged += delegate { if (!_busy) SetStatus("Press Scan to look for junk in these folders."); };
+            TableLayoutPanel titles = new TableLayoutPanel();
+            titles.Dock = DockStyle.Fill;
+            titles.ColumnCount = 1;
+            titles.RowCount = 2;
+            titles.RowStyles.Add(new RowStyle(SizeType.Absolute, 27));
+            titles.RowStyles.Add(new RowStyle(SizeType.Absolute, 18));
+            titles.Margin = new Padding(0);
 
-            FlowLayoutPanel buttons = new FlowLayoutPanel();
-            buttons.Dock = DockStyle.Fill;
-            buttons.FlowDirection = FlowDirection.LeftToRight;
-            buttons.WrapContents = false;
-            buttons.Margin = new Padding(0);
-            buttons.Padding = new Padding(0, 1, 0, 0);
+            _titleLabel = Ui.Label("All items", Theme.Large, Theme.Text, false);
+            _titleLabel.Dock = DockStyle.Fill;
+            _titleLabel.TextAlign = ContentAlignment.BottomLeft;
+            _titleLabel.AutoEllipsis = true;
 
-            _browseButton = Ui.FlatButton("...", Theme.Surface, Theme.Text, false);
-            _browseButton.MinimumSize = new Size(42, 32);
-            _browseButton.Margin = new Padding(0, 0, 8, 0);
-            _browseButton.Click += BrowseClick;
+            _blurbLabel = Ui.Label("Everything the scan found, in one place.", Theme.Tiny, Theme.TextDim, false);
+            _blurbLabel.Dock = DockStyle.Fill;
+            _blurbLabel.TextAlign = ContentAlignment.TopLeft;
+            _blurbLabel.AutoEllipsis = true;
 
-            _optionsButton = Ui.FlatButton("Options", Theme.Surface, Theme.Text, false);
-            _optionsButton.MinimumSize = new Size(96, 32);
-            _optionsButton.Margin = new Padding(0, 0, 8, 0);
-            _optionsButton.Click += OptionsClick;
+            titles.Controls.Add(_titleLabel, 0, 0);
+            titles.Controls.Add(_blurbLabel, 0, 1);
 
-            _scanButton = Ui.FlatButton("Scan", Theme.AccentDark, Color.White, true);
-            _scanButton.MinimumSize = new Size(96, 32);
-            _scanButton.Font = Theme.Medium;
-            _scanButton.Margin = new Padding(0, 0, 8, 0);
-            _scanButton.Click += ScanClick;
+            FlowLayoutPanel tools = new FlowLayoutPanel();
+            tools.Dock = DockStyle.Fill;
+            tools.FlowDirection = FlowDirection.RightToLeft;
+            tools.WrapContents = false;
+            tools.Margin = new Padding(0);
+            tools.Padding = new Padding(0, 4, 0, 0);
 
-            _cancelButton = Ui.FlatButton("Cancel", Theme.Surface, Theme.TextMuted, false);
-            _cancelButton.MinimumSize = new Size(92, 32);
-            _cancelButton.Margin = new Padding(0, 0, 0, 0);
-            _cancelButton.Enabled = false;
-            _cancelButton.Click += CancelClick;
+            GridView[] views = { GridView.Large, GridView.Medium, GridView.List, GridView.Details };
+            string[] labels = { "Large", "Medium", "List", "Details" };
+            int[] widths = { 58, 66, 52, 62 };
 
-            buttons.Controls.Add(_browseButton);
-            buttons.Controls.Add(_optionsButton);
-            buttons.Controls.Add(_scanButton);
-            buttons.Controls.Add(_cancelButton);
+            for (int i = views.Length - 1; i >= 0; i--)
+            {
+                GridView view = views[i];
+                PillButton button = new PillButton();
+                button.Text = labels[i];
+                button.Style = PillButton.Kind.Outline;
+                button.Width = widths[i];
+                button.Height = 30;
+                button.Margin = new Padding(4, 0, 0, 0);
+                button.Toggled = view == _view;
+                button.Click += delegate { SetView(view); };
+                _viewButtons[view] = button;
+                tools.Controls.Add(button);
+            }
 
-            row.Controls.Add(_rootsBox, 0, 0);
-            row.Controls.Add(buttons, 1, 0);
+            Panel separator = new Panel();
+            separator.Width = 1;
+            separator.Height = 20;
+            separator.BackColor = Theme.Line;
+            separator.Margin = new Padding(12, 5, 8, 5);
+            tools.Controls.Add(separator);
+
+            _directionButton = new PillButton();
+            _directionButton.Text = "↓";
+            _directionButton.Style = PillButton.Kind.Ghost;
+            _directionButton.Width = 34;
+            _directionButton.Height = 30;
+            _directionButton.Margin = new Padding(4, 0, 0, 0);
+            _directionButton.Click += delegate
+            {
+                _descending = !_descending;
+                ApplySort();
+            };
+            tools.Controls.Add(_directionButton);
+
+            _sortButton = new PillButton();
+            _sortButton.Text = "Sort: Size";
+            _sortButton.Style = PillButton.Kind.Outline;
+            _sortButton.Width = 124;
+            _sortButton.Height = 30;
+            _sortButton.Margin = new Padding(0, 0, 0, 0);
+            _sortButton.Click += SortClick;
+            tools.Controls.Add(_sortButton);
+
+            _metaLabel = Ui.Label(string.Empty, Theme.Small, Theme.TextMuted, false);
+            _metaLabel.AutoSize = true;
+            _metaLabel.TextAlign = ContentAlignment.MiddleRight;
+            _metaLabel.Margin = new Padding(0, 3, 12, 0);
+            tools.Controls.Add(_metaLabel);
+
+            row.Controls.Add(titles, 0, 0);
+            row.Controls.Add(tools, 1, 0);
 
             bar.Controls.Add(row);
             return bar;
         }
 
-        // ---------------------------------------------------------------- middle
-
-        private Control BuildMiddle()
+        private Control BuildContent()
         {
-            TableLayoutPanel middle = new TableLayoutPanel();
-            middle.Dock = DockStyle.Fill;
-            middle.ColumnCount = 2;
-            middle.RowCount = 1;
-            middle.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 216));
-            middle.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            middle.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            middle.Margin = new Padding(0);
-            middle.Padding = new Padding(0);
+            TableLayoutPanel content = new TableLayoutPanel();
+            content.Dock = DockStyle.Fill;
+            content.ColumnCount = 3;
+            content.RowCount = 1;
+            content.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 226));
+            content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            content.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 342));
+            content.Margin = new Padding(0);
+            content.BackColor = Theme.Background;
 
-            Panel sidebar = new Panel();
-            sidebar.Dock = DockStyle.Fill;
-            sidebar.BackColor = Theme.Sidebar;
-            sidebar.Padding = new Padding(14, 14, 8, 14);
-            sidebar.Margin = new Padding(0);
+            _rail = new CategoryRail();
+            _rail.Dock = DockStyle.Fill;
+            _rail.Margin = new Padding(0);
+            _rail.SelectionChanged += delegate { ApplyFilter(true); };
 
-            TableLayoutPanel side = new TableLayoutPanel();
-            side.Dock = DockStyle.Fill;
-            side.ColumnCount = 1;
-            side.RowCount = 4;
-            side.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
-            side.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            side.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
-            side.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
-            side.Margin = new Padding(0);
+            Panel host = new Panel();
+            host.Dock = DockStyle.Fill;
+            host.BackColor = Theme.Background;
+            host.Margin = new Padding(0);
 
-            Label heading = Ui.Label("CATEGORIES", Theme.SmallBold, Theme.TextMuted, false);
-            heading.Dock = DockStyle.Fill;
-            heading.TextAlign = ContentAlignment.MiddleLeft;
+            _grid = new FindingGrid();
+            _grid.Dock = DockStyle.Fill;
+            _grid.Margin = new Padding(0);
+            _grid.SelectionChanged += delegate { UpdateInspector(); };
+            _grid.CheckChanged += delegate { UpdateActionBar(); UpdateInspector(); };
+            _grid.Activated += delegate { OpenPrimary(); };
+            _grid.SortRequested += delegate (object sender, SortField field) { SortBy(field); };
+            _grid.ContextMenuStrip = BuildItemMenu();
 
-            _categoryList = new ListBox();
-            _categoryList.Dock = DockStyle.Fill;
-            _categoryList.BorderStyle = BorderStyle.None;
-            _categoryList.BackColor = Theme.Sidebar;
-            _categoryList.ForeColor = Theme.Text;
-            _categoryList.Font = Theme.Body;
-            _categoryList.IntegralHeight = false;
-            _categoryList.SelectedIndexChanged += CategoryChanged;
+            _empty = new EmptyState();
+            _empty.Dock = DockStyle.Fill;
+            _empty.Visible = false;
 
-            Button historyButton = Ui.FlatButton("Cleanup history", Theme.Sidebar, Theme.TextMuted, false);
-            historyButton.Dock = DockStyle.Fill;
-            historyButton.MinimumSize = new Size(0, 30);
-            historyButton.Margin = new Padding(0, 8, 0, 0);
-            historyButton.Click += delegate
-            {
-                using (HistoryForm form = new HistoryForm())
-                {
-                    form.ShowDialog(this);
-                }
-            };
+            host.Controls.Add(_grid);
+            host.Controls.Add(_empty);
 
-            _shortcutButton = Ui.FlatButton("Desktop shortcut", Theme.Sidebar, Theme.TextMuted, false);
-            _shortcutButton.Dock = DockStyle.Fill;
-            _shortcutButton.MinimumSize = new Size(0, 30);
-            _shortcutButton.Margin = new Padding(0, 0, 0, 0);
-            _shortcutButton.Click += ShortcutClick;
+            _inspector = new Inspector();
+            _inspector.Dock = DockStyle.Fill;
+            _inspector.Margin = new Padding(0);
+            _inspector.TickRequested += delegate { TogglePrimary(); };
+            _inspector.OpenRequested += delegate { OpenPrimary(); };
 
-            side.Controls.Add(heading, 0, 0);
-            side.Controls.Add(_categoryList, 0, 1);
-            side.Controls.Add(historyButton, 0, 2);
-            side.Controls.Add(_shortcutButton, 0, 3);
-            sidebar.Controls.Add(side);
-
-            Panel card = new Panel();
-            card.Dock = DockStyle.Fill;
-            card.BackColor = Theme.Surface;
-            card.Margin = new Padding(0);
-            card.Padding = new Padding(0);
-
-            _list = new ListView();
-            Ui.ConfigureListView(_list);
-            _list.Dock = DockStyle.Fill;
-            _list.Columns.Add("Item", 240);
-            _list.Columns.Add("Location", 380);
-            _list.Columns.Add("Size", 92);
-            _list.Columns.Add("Safety", 86);
-            _list.ItemCheck += ItemCheck;
-            _list.SelectedIndexChanged += SelectionChanged;
-            _list.Resize += ListResized;
-
-            _emptyState = Ui.Label("Nothing scanned yet.\n\nPress Scan and BinDay will look for build output, caches, old installers and duplicate files.", Theme.Body, Theme.TextMuted, false);
-            _emptyState.TextAlign = ContentAlignment.MiddleCenter;
-            _emptyState.Dock = DockStyle.Fill;
-            _emptyState.Visible = false;
-
-            card.Controls.Add(_list);
-            card.Controls.Add(_emptyState);
-            middle.Controls.Add(sidebar, 0, 0);
-            middle.Controls.Add(card, 1, 0);
-
-            return middle;
+            content.Controls.Add(_rail, 0, 0);
+            content.Controls.Add(host, 1, 0);
+            content.Controls.Add(_inspector, 2, 0);
+            return content;
         }
 
-        private void ListResized(object sender, EventArgs e)
+        private ContextMenuStrip BuildItemMenu()
         {
-            int width = _list.ClientSize.Width - 240 - 92 - 86 - 28;
-            if (width < 120) width = 120;
-            _list.Columns[1].Width = width;
+            ContextMenuStrip menu = Ui.DarkMenu();
+            menu.Items.Add("Open location", null, delegate { OpenPrimary(); });
+            menu.Items.Add("Tick for cleanup", null, delegate { TogglePrimary(); });
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add("Copy path", null, delegate { CopyPrimaryPath(); });
+            return menu;
         }
-
-        // ---------------------------------------------------------------- detail
-
-        private Control BuildDetail()
-        {
-            Panel panel = new Panel();
-            panel.Dock = DockStyle.Fill;
-            panel.BackColor = Theme.Surface;
-            panel.Margin = new Padding(0);
-            panel.Padding = new Padding(0);
-
-            TableLayoutPanel columns = new TableLayoutPanel();
-            columns.Dock = DockStyle.Fill;
-            columns.ColumnCount = 2;
-            columns.RowCount = 1;
-            columns.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 4));
-            columns.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            columns.Margin = new Padding(0);
-            columns.Padding = new Padding(0);
-
-            Panel stripe = new Panel();
-            stripe.Dock = DockStyle.Fill;
-            stripe.BackColor = Theme.AccentDark;
-
-            TableLayoutPanel detail = new TableLayoutPanel();
-            detail.Dock = DockStyle.Fill;
-            detail.ColumnCount = 1;
-            detail.RowCount = 4;
-            detail.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
-            detail.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
-            detail.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            detail.RowStyles.Add(new RowStyle(SizeType.Absolute, 20));
-            detail.Margin = new Padding(0);
-            detail.Padding = new Padding(20, 12, 20, 10);
-
-            _detailTitle = Ui.Label("Nothing selected", Theme.Large, Theme.Text, false);
-            _detailTitle.Dock = DockStyle.Fill;
-            _detailTitle.TextAlign = ContentAlignment.MiddleLeft;
-            _detailTitle.AutoEllipsis = true;
-
-            _detailMeta = Ui.Label(string.Empty, Theme.Small, Theme.TextMuted, false);
-            _detailMeta.Dock = DockStyle.Fill;
-            _detailMeta.TextAlign = ContentAlignment.MiddleLeft;
-            _detailMeta.AutoEllipsis = true;
-
-            _detailWhy = Ui.Label("Tick an item on the left to see why it is safe to remove.", Theme.Body, Theme.Text, false);
-            _detailWhy.Dock = DockStyle.Fill;
-            _detailWhy.TextAlign = ContentAlignment.TopLeft;
-
-            _detailProject = Ui.Label(string.Empty, Theme.Small, Theme.TextMuted, false);
-            _detailProject.Dock = DockStyle.Fill;
-            _detailProject.TextAlign = ContentAlignment.MiddleLeft;
-            _detailProject.AutoEllipsis = true;
-
-            detail.Controls.Add(_detailTitle, 0, 0);
-            detail.Controls.Add(_detailMeta, 0, 1);
-            detail.Controls.Add(_detailWhy, 0, 2);
-            detail.Controls.Add(_detailProject, 0, 3);
-
-            columns.Controls.Add(stripe, 0, 0);
-            columns.Controls.Add(detail, 1, 0);
-            panel.Controls.Add(columns);
-            return panel;
-        }
-
-        // ----------------------------------------------------------- action bar
 
         private Control BuildActionBar()
         {
             Panel bar = new Panel();
             bar.Dock = DockStyle.Fill;
             bar.BackColor = Theme.Surface;
-            bar.Padding = new Padding(16, 11, 16, 11);
+            bar.Paint += delegate (object sender, PaintEventArgs e)
+            {
+                using (SolidBrush brush = new SolidBrush(Theme.Surface))
+                {
+                    e.Graphics.FillRectangle(brush, bar.ClientRectangle);
+                }
+
+                using (Pen pen = new Pen(Theme.Line, 1f))
+                {
+                    e.Graphics.DrawLine(pen, 0, 0, bar.Width, 0);
+                }
+            };
 
             TableLayoutPanel row = new TableLayoutPanel();
             row.Dock = DockStyle.Fill;
-            row.ColumnCount = 2;
+            row.ColumnCount = 3;
             row.RowCount = 1;
             row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 700));
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 292));
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            row.Padding = new Padding(24, 12, 18, 12);
             row.Margin = new Padding(0);
 
-            Label hint = Ui.Label("Nothing is deleted until you tick it and confirm.", Theme.Small, Theme.TextMuted, false);
-            hint.Dock = DockStyle.Fill;
-            hint.TextAlign = ContentAlignment.MiddleLeft;
+            TableLayoutPanel summary = new TableLayoutPanel();
+            summary.Dock = DockStyle.Fill;
+            summary.ColumnCount = 1;
+            summary.RowCount = 2;
+            summary.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
+            summary.RowStyles.Add(new RowStyle(SizeType.Absolute, 20));
+            summary.Margin = new Padding(0);
 
-            FlowLayoutPanel buttons = new FlowLayoutPanel();
-            buttons.Dock = DockStyle.Fill;
-            buttons.FlowDirection = FlowDirection.RightToLeft;
-            buttons.WrapContents = false;
-            buttons.Margin = new Padding(0);
+            _tickedLabel = Ui.Label("Nothing ticked yet", Theme.Medium, Theme.Text, false);
+            _tickedLabel.Dock = DockStyle.Fill;
+            _tickedLabel.TextAlign = ContentAlignment.BottomLeft;
 
-            _recycleButton = Ui.FlatButton("Move to Recycle Bin", Theme.AccentDark, Color.White, true);
-            _recycleButton.MinimumSize = new Size(178, 32);
-            _recycleButton.Font = Theme.Medium;
-            _recycleButton.Margin = new Padding(8, 0, 0, 0);
-            _recycleButton.Click += RecycleClick;
+            _hintLabel = Ui.Label("Tick items to build a cleanup list. Nothing is removed until you confirm.",
+                Theme.Tiny, Theme.TextDim, false);
+            _hintLabel.Dock = DockStyle.Fill;
+            _hintLabel.TextAlign = ContentAlignment.TopLeft;
+            _hintLabel.AutoEllipsis = true;
 
-            _deleteButton = Ui.FlatButton("Delete permanently", Theme.Surface, ColorTranslator.FromHtml("#B91C1C"), false);
-            _deleteButton.MinimumSize = new Size(160, 32);
-            _deleteButton.Margin = new Padding(8, 0, 0, 0);
-            _deleteButton.Click += DeleteClick;
+            summary.Controls.Add(_tickedLabel, 0, 0);
+            summary.Controls.Add(_hintLabel, 0, 1);
 
-            _selectNoneButton = Ui.FlatButton("Clear ticks", Theme.Surface, Theme.Text, false);
-            _selectNoneButton.MinimumSize = new Size(104, 32);
-            _selectNoneButton.Margin = new Padding(8, 0, 0, 0);
-            _selectNoneButton.Click += ClearTicksClick;
+            FlowLayoutPanel modes = new FlowLayoutPanel();
+            modes.Dock = DockStyle.Fill;
+            modes.FlowDirection = FlowDirection.LeftToRight;
+            modes.WrapContents = false;
+            modes.Margin = new Padding(8, 8, 8, 0);
 
-            _selectSafeButton = Ui.FlatButton("Tick all Safe items", Theme.Surface, Theme.Text, false);
-            _selectSafeButton.MinimumSize = new Size(158, 32);
-            _selectSafeButton.Margin = new Padding(8, 0, 0, 0);
-            _selectSafeButton.Click += SelectSafeClick;
+            _modeRecycle = new PillButton();
+            _modeRecycle.Text = "Recycle Bin";
+            _modeRecycle.Style = PillButton.Kind.Outline;
+            _modeRecycle.Width = 122;
+            _modeRecycle.Height = 36;
+            _modeRecycle.Toggled = true;
+            _modeRecycle.Margin = new Padding(0, 0, 4, 0);
+            _modeRecycle.Click += delegate { SetMode(DeleteMode.Recycle); };
 
-            buttons.Controls.Add(_recycleButton);
-            buttons.Controls.Add(_deleteButton);
-            buttons.Controls.Add(_selectNoneButton);
-            buttons.Controls.Add(_selectSafeButton);
+            _modePermanent = new PillButton();
+            _modePermanent.Text = "Delete permanently";
+            _modePermanent.Style = PillButton.Kind.Outline;
+            _modePermanent.Width = 152;
+            _modePermanent.Height = 36;
+            _modePermanent.Margin = new Padding(0);
+            _modePermanent.Click += delegate { SetMode(DeleteMode.Permanent); };
 
-            row.Controls.Add(hint, 0, 0);
-            row.Controls.Add(buttons, 1, 0);
+            modes.Controls.Add(_modeRecycle);
+            modes.Controls.Add(_modePermanent);
+
+            FlowLayoutPanel actions = new FlowLayoutPanel();
+            actions.Dock = DockStyle.Fill;
+            actions.FlowDirection = FlowDirection.RightToLeft;
+            actions.WrapContents = false;
+            actions.Margin = new Padding(0);
+            actions.Padding = new Padding(0, 6, 0, 0);
+
+            _cleanButton = new PillButton();
+            _cleanButton.Text = "Clean";
+            _cleanButton.Style = PillButton.Kind.Solid;
+            _cleanButton.Font = Theme.Medium;
+            _cleanButton.Width = 196;
+            _cleanButton.Height = 40;
+            _cleanButton.Margin = new Padding(8, 0, 0, 0);
+            _cleanButton.Enabled = false;
+            _cleanButton.Click += CleanClick;
+
+            _clearButton = new PillButton();
+            _clearButton.Text = "Clear";
+            _clearButton.Style = PillButton.Kind.Ghost;
+            _clearButton.Width = 72;
+            _clearButton.Height = 40;
+            _clearButton.Margin = new Padding(4, 0, 0, 0);
+            _clearButton.Enabled = false;
+            _clearButton.Click += delegate
+            {
+                _grid.ClearChecks();
+                SetStatus("Ticks cleared.");
+            };
+
+            _safeButton = new PillButton();
+            _safeButton.Text = "Tick all Safe";
+            _safeButton.Style = PillButton.Kind.Ghost;
+            _safeButton.Width = 112;
+            _safeButton.Height = 40;
+            _safeButton.Margin = new Padding(4, 0, 0, 0);
+            _safeButton.Click += TickSafeClick;
+
+            actions.Controls.Add(_cleanButton);
+            actions.Controls.Add(_clearButton);
+            actions.Controls.Add(_safeButton);
+
+            row.Controls.Add(summary, 0, 0);
+            row.Controls.Add(modes, 1, 0);
+            row.Controls.Add(actions, 2, 0);
 
             bar.Controls.Add(row);
             return bar;
         }
 
-        private StatusStrip BuildStatusStrip()
+        private Control BuildStatusBar()
         {
-            StatusStrip strip = new StatusStrip();
-            strip.BackColor = Theme.Surface;
-            strip.ForeColor = Theme.TextMuted;
-            strip.Font = Theme.Small;
-            strip.SizingGrip = false;
+            Panel bar = new Panel();
+            bar.Dock = DockStyle.Fill;
+            bar.BackColor = Theme.Surface;
+            bar.Paint += delegate (object sender, PaintEventArgs e)
+            {
+                using (SolidBrush brush = new SolidBrush(Theme.Surface))
+                {
+                    e.Graphics.FillRectangle(brush, bar.ClientRectangle);
+                }
 
-            _statusLabel = new ToolStripStatusLabel();
-            _statusLabel.Spring = true;
+                using (Pen pen = new Pen(Theme.LineSoft, 1f))
+                {
+                    e.Graphics.DrawLine(pen, 0, 0, bar.Width, 0);
+                }
+            };
+
+            TableLayoutPanel row = new TableLayoutPanel();
+            row.Dock = DockStyle.Fill;
+            row.ColumnCount = 3;
+            row.RowCount = 1;
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+            row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 280));
+            row.Padding = new Padding(24, 0, 18, 0);
+            row.Margin = new Padding(0);
+
+            _statusLabel = Ui.Label(string.Empty, Theme.Tiny, Theme.TextDim, false);
+            _statusLabel.Dock = DockStyle.Fill;
             _statusLabel.TextAlign = ContentAlignment.MiddleLeft;
+            _statusLabel.AutoEllipsis = true;
 
-            _stripProgress = new ToolStripProgressBar();
-            _stripProgress.Visible = false;
-            _stripProgress.Width = 180;
+            _pulse = new PulseBar();
+            _pulse.Dock = DockStyle.Fill;
+            _pulse.Margin = new Padding(0, 10, 0, 10);
+            _pulse.Visible = false;
 
-            _countLabel = new ToolStripStatusLabel();
-            _countLabel.Text = "";
+            _countLabel = Ui.Label(string.Empty, Theme.Tiny, Theme.TextDim, false);
+            _countLabel.Dock = DockStyle.Fill;
+            _countLabel.TextAlign = ContentAlignment.MiddleRight;
 
-            strip.Items.Add(_statusLabel);
-            strip.Items.Add(_stripProgress);
-            strip.Items.Add(_countLabel);
+            row.Controls.Add(_statusLabel, 0, 0);
+            row.Controls.Add(_pulse, 1, 0);
+            row.Controls.Add(_countLabel, 2, 0);
 
-            return strip;
+            bar.Controls.Add(row);
+            return bar;
         }
 
-        // ------------------------------------------------------------- scanning
+        // ------------------------------------------------------------- actions
 
         private void BrowseClick(object sender, EventArgs e)
         {
             using (FolderBrowserDialog dialog = new FolderBrowserDialog())
             {
-                dialog.Description = "Choose a folder to scan";
-                if (!string.IsNullOrEmpty(_rootsBox.Text)) dialog.SelectedPath = _rootsBox.Text.Trim();
+                dialog.Description = "Choose a folder for BinDay to scan";
+                dialog.ShowNewFolderButton = false;
+
+                string current = FirstRoot();
+                if (!string.IsNullOrEmpty(current) && Directory.Exists(current)) dialog.SelectedPath = current;
+
                 if (dialog.ShowDialog(this) == DialogResult.OK)
                 {
-                    _rootsBox.Text = dialog.SelectedPath;
+                    _pathBox.Text = dialog.SelectedPath;
                 }
             }
         }
@@ -526,13 +766,212 @@ namespace BinDay.App
                 if (dialog.ShowDialog(this) == DialogResult.OK)
                 {
                     _options = dialog.Options;
+                    SetStatus("Scan settings saved. Press Scan to use them.");
                 }
             }
         }
 
-        private void CancelClick(object sender, EventArgs e)
+        private void HistoryClick(object sender, EventArgs e)
         {
-            if (_cts != null) _cts.Cancel();
+            using (HistoryForm dialog = new HistoryForm())
+            {
+                dialog.ShowDialog(this);
+            }
+        }
+
+        private void AboutClick(object sender, EventArgs e)
+        {
+            string message =
+                "BinDay " + Application.ProductVersion + "\n\n" +
+                "A native Windows disk cleaner that shows you what it found, explains what would happen, " +
+                "and never removes anything you have not ticked and confirmed.\n\n" +
+                "Website: https://getbinday.vercel.app\n" +
+                "Source: https://github.com/khansarim007/binday\n" +
+                "Licence: MIT";
+
+            MessageBox.Show(this, message, "About BinDay", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void MoreClick(object sender, EventArgs e)
+        {
+            ContextMenuStrip menu = Ui.DarkMenu();
+            menu.Items.Add("Scan options...", null, OptionsClick);
+            menu.Items.Add("Cleanup history", null, HistoryClick);
+            menu.Items.Add("Create desktop shortcut", null, ShortcutClick);
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add("About BinDay", null, AboutClick);
+            menu.Show(_moreButton, new Point(0, _moreButton.Height + 4));
+        }
+
+        private void SortClick(object sender, EventArgs e)
+        {
+            ContextMenuStrip menu = Ui.DarkMenu();
+
+            AddSortItem(menu, "Size", SortField.Size);
+            AddSortItem(menu, "Name", SortField.Name);
+            AddSortItem(menu, "Date changed", SortField.Changed);
+            AddSortItem(menu, "Safety", SortField.Safety);
+            AddSortItem(menu, "Collection", SortField.Category);
+            AddSortItem(menu, "File count", SortField.Files);
+
+            menu.Show(_sortButton, new Point(0, _sortButton.Height + 4));
+        }
+
+        private void AddSortItem(ContextMenuStrip menu, string text, SortField field)
+        {
+            ToolStripMenuItem item = new ToolStripMenuItem(text);
+            item.Checked = _sort == field;
+            item.Click += delegate { SortBy(field); };
+            menu.Items.Add(item);
+        }
+
+        private void SortBy(SortField field)
+        {
+            if (_sort == field)
+            {
+                _descending = !_descending;
+            }
+            else
+            {
+                _sort = field;
+                _descending = field == SortField.Size || field == SortField.Changed || field == SortField.Files;
+            }
+
+            ApplySort();
+        }
+
+        private void ApplySort()
+        {
+            Comparison<Finding> comparison = ComparisonFor(_sort);
+
+            _visible.Sort(delegate (Finding a, Finding b)
+            {
+                int result = comparison(a, b);
+                return _descending ? -result : result;
+            });
+
+            _grid.Sort = _sort;
+            _grid.SortDescending = _descending;
+            _grid.SetItems(_visible, true);
+
+            _sortButton.Text = "Sort: " + SortName(_sort);
+            _directionButton.Text = _descending ? "↓" : "↑";
+
+            UpdateToolbar();
+            UpdateInspector();
+        }
+
+        private static string SortName(SortField field)
+        {
+            switch (field)
+            {
+                case SortField.Size: return "Size";
+                case SortField.Name: return "Name";
+                case SortField.Changed: return "Date";
+                case SortField.Safety: return "Safety";
+                case SortField.Category: return "Collection";
+                default: return "Files";
+            }
+        }
+
+        private static Comparison<Finding> ComparisonFor(SortField field)
+        {
+            switch (field)
+            {
+                case SortField.Size:
+                    return delegate (Finding a, Finding b) { return a.Bytes.CompareTo(b.Bytes); };
+
+                case SortField.Name:
+                    return delegate (Finding a, Finding b)
+                    {
+                        return string.Compare(a.Title ?? string.Empty, b.Title ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+                    };
+
+                case SortField.Changed:
+                    return delegate (Finding a, Finding b) { return a.Modified.CompareTo(b.Modified); };
+
+                case SortField.Safety:
+                    return delegate (Finding a, Finding b) { return a.Level.CompareTo(b.Level); };
+
+                case SortField.Category:
+                    return delegate (Finding a, Finding b)
+                    {
+                        return string.Compare(a.CategoryLabel, b.CategoryLabel, StringComparison.OrdinalIgnoreCase);
+                    };
+
+                default:
+                    return delegate (Finding a, Finding b) { return a.FileCount.CompareTo(b.FileCount); };
+            }
+        }
+
+        private void SetView(GridView view)
+        {
+            _view = view;
+            _grid.ViewMode = view;
+
+            foreach (KeyValuePair<GridView, PillButton> pair in _viewButtons)
+            {
+                pair.Value.Toggled = pair.Key == view;
+            }
+
+            SavePreferences();
+        }
+
+        private void SetMode(DeleteMode mode)
+        {
+            _mode = mode;
+            _modeRecycle.Toggled = mode == DeleteMode.Recycle;
+            _modePermanent.Toggled = mode == DeleteMode.Permanent;
+            _cleanButton.Style = mode == DeleteMode.Permanent ? PillButton.Kind.Danger : PillButton.Kind.Solid;
+
+            _inspector.SetMode(mode);
+            UpdateActionBar();
+        }
+
+        private void OpenPrimary()
+        {
+            Finding finding = _grid.Primary;
+            if (finding == null) return;
+
+            string path = finding.IsDuplicateGroup ? finding.KeeperPath : finding.Path;
+            Ui.OpenLocation(path, !finding.IsFolder);
+        }
+
+        private void CopyPrimaryPath()
+        {
+            Finding finding = _grid.Primary;
+            if (finding == null) return;
+
+            try
+            {
+                Clipboard.SetText(finding.IsDuplicateGroup ? finding.KeeperPath : finding.Path);
+                SetStatus("Path copied to the clipboard.");
+            }
+            catch (Exception) { }
+        }
+
+        private void TogglePrimary()
+        {
+            Finding finding = _grid.Primary;
+            if (finding == null) return;
+
+            _grid.ToggleChecked(finding);
+            UpdateInspector();
+        }
+
+        // ------------------------------------------------------------- scanning
+
+        private string FirstRoot()
+        {
+            if (_pathBox == null) return null;
+
+            string[] parts = _pathBox.Text.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i < parts.Length; i++)
+            {
+                string trimmed = parts[i].Trim().Trim('"');
+                if (trimmed.Length > 0) return trimmed;
+            }
+            return null;
         }
 
         private async void ScanClick(object sender, EventArgs e)
@@ -540,17 +979,28 @@ namespace BinDay.App
             if (_busy) return;
 
             List<string> roots = new List<string>();
-            string[] parts = _rootsBox.Text.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+            string[] parts = _pathBox.Text.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+
             for (int i = 0; i < parts.Length; i++)
             {
-                string trimmed = parts[i].Trim();
+                string trimmed = parts[i].Trim().Trim('"');
                 if (trimmed.Length > 0) roots.Add(trimmed);
             }
 
             if (roots.Count == 0)
             {
-                MessageBox.Show(this, "Type or browse for a folder to scan first.", "BinDay", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                SetStatus("Choose a folder first, then press Scan.");
+                _pathBox.Focus();
                 return;
+            }
+
+            for (int i = 0; i < roots.Count; i++)
+            {
+                if (!Directory.Exists(roots[i]))
+                {
+                    SetStatus("That folder does not exist: " + roots[i]);
+                    return;
+                }
             }
 
             ScanOptions options = BuildOptions(roots);
@@ -560,7 +1010,6 @@ namespace BinDay.App
             ToggleBusy(true);
 
             IProgress<ScanProgress> progress = new Progress<ScanProgress>(OnScanProgress);
-
             ScanResult result = null;
             Exception failure = null;
 
@@ -570,13 +1019,8 @@ namespace BinDay.App
                 {
                     result = DiskScanner.Scan(options, progress, _cts.Token);
                 }
-                catch (OperationCanceledException)
-                {
-                }
-                catch (Exception ex)
-                {
-                    failure = ex;
-                }
+                catch (OperationCanceledException) { }
+                catch (Exception ex) { failure = ex; }
             });
 
             _busy = false;
@@ -584,8 +1028,7 @@ namespace BinDay.App
 
             if (failure != null)
             {
-                MessageBox.Show(this, "The scan failed:\n\n" + failure.Message, "BinDay", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                SetStatus("Scan failed.");
+                SetStatus("The scan failed: " + failure.Message);
                 return;
             }
 
@@ -597,15 +1040,20 @@ namespace BinDay.App
 
             _findings.Clear();
             _findings.AddRange(result.Findings);
-            _checked.Clear();
+            _grid.Checked.Clear();
+            Thumbnails.Clear();
+            _scanned = true;
 
-            PopulateCategories();
-            BindList();
-            UpdateHeader();
+            RefreshCategories();
+            ApplyFilter(false);
 
             SetStatus(string.Format(CultureInfo.CurrentCulture,
-                "Scanned {0} folders in {1:0.0}s. {2} items found.",
-                Format.Count(result.FoldersScanned), result.Elapsed.TotalSeconds, Format.Count(result.Findings.Count)));
+                "Scanned {0} folders and {1} files in {2:0.0}s.",
+                Format.Count(result.FoldersScanned), Format.Count(result.FilesScanned), result.Elapsed.TotalSeconds));
+
+            _countLabel.Text = _findings.Count == 0
+                ? "nothing to clean"
+                : Format.Count(_findings.Count) + " items  ·  " + Format.Bytes(TotalBytes()) + " found";
         }
 
         private ScanOptions BuildOptions(List<string> roots)
@@ -616,313 +1064,251 @@ namespace BinDay.App
             options.ScanCaches = _options.ScanCaches;
             options.ScanInstallers = _options.ScanInstallers;
             options.ScanDuplicates = _options.ScanDuplicates;
+            options.ScanMedia = _options.ScanMedia;
+            options.ScanLargeFiles = _options.ScanLargeFiles;
             options.DuplicateMinBytes = _options.DuplicateMinBytes;
             options.InstallerMinAgeDays = _options.InstallerMinAgeDays;
             options.InstallerMinBytes = _options.InstallerMinBytes;
+            options.VideoMinBytes = _options.VideoMinBytes;
+            options.AudioMinBytes = _options.AudioMinBytes;
+            options.ImageMinBytes = _options.ImageMinBytes;
+            options.AppPackageMinBytes = _options.AppPackageMinBytes;
+            options.LargeFileMinBytes = _options.LargeFileMinBytes;
             options.ExtraExcludedNames.AddRange(_options.ExtraExcludedNames);
 
-            if (options.ScanCaches)
-            {
-                options.CacheLocations.AddRange(RuleSet.DefaultCacheLocations());
-            }
-
-            if (options.ScanInstallers)
-            {
-                options.InstallerFolders.AddRange(RuleSet.DefaultInstallerFolders());
-            }
+            if (options.ScanCaches) options.CacheLocations.AddRange(RuleSet.DefaultCacheLocations());
+            if (options.ScanInstallers) options.InstallerFolders.AddRange(RuleSet.DefaultInstallerFolders());
 
             return options;
         }
 
         private void OnScanProgress(ScanProgress progress)
         {
-            _stripProgress.Visible = true;
-            _stripProgress.Style = ProgressBarStyle.Marquee;
-            _stripProgress.MarqueeAnimationSpeed = 30;
-            SetStatus(progress.Phase + " - " + Format.Count(progress.Folders) + " folders, " + Format.Count(progress.Findings) + " items, " + Format.Bytes(progress.Bytes) + " found");
+            SetStatus(progress.Phase + "  ·  " + Format.Count(progress.Folders) + " folders, " +
+                      Format.Count(progress.Findings) + " items, " + Format.Bytes(progress.Bytes));
         }
 
         private void ToggleBusy(bool busy)
         {
             _scanButton.Enabled = !busy;
             _browseButton.Enabled = !busy;
-            _optionsButton.Enabled = !busy;
-            _cancelButton.Enabled = busy;
-            _recycleButton.Enabled = !busy;
-            _deleteButton.Enabled = !busy;
-            _selectSafeButton.Enabled = !busy;
-            _selectNoneButton.Enabled = !busy;
+            _moreButton.Enabled = !busy;
+            _scanButton.Text = busy ? "Scanning" : "Scan";
+            _pulse.Running = busy;
+            _rail.Enabled = !busy;
 
-            if (!busy)
+            if (busy)
             {
-                _stripProgress.Visible = false;
-                _stripProgress.Style = ProgressBarStyle.Continuous;
+                _scanButton.Style = PillButton.Kind.Outline;
             }
+            else
+            {
+                _scanButton.Style = PillButton.Kind.Solid;
+            }
+        }
+
+        private void CancelScan()
+        {
+            if (_cts != null) _cts.Cancel();
         }
 
         // -------------------------------------------------------------- listing
 
-        private void PopulateCategories()
+        private void RefreshCategories()
         {
-            _categoryList.BeginUpdate();
-            _categoryList.Items.Clear();
+            List<CategoryRail.Item> items = new List<CategoryRail.Item>();
 
-            string[] names = { "All", "Dev junk", "Caches", "Temp files", "Installers", "Duplicates" };
+            items.Add(new CategoryRail.Item
+            {
+                Title = "All items",
+                Category = null,
+                Count = _findings.Count,
+                Bytes = TotalBytes()
+            });
 
-            for (int i = 0; i < _categories.Length; i++)
+            Category[] order = CategoryInfo.InRailOrder;
+            for (int i = 0; i < order.Length; i++)
             {
                 int count = 0;
                 long bytes = 0;
 
                 for (int f = 0; f < _findings.Count; f++)
                 {
-                    if (_categories[i].HasValue && _findings[f].Category != _categories[i].Value) continue;
+                    if (_findings[f].Category != order[i]) continue;
                     count++;
                     bytes += _findings[f].Bytes;
                 }
 
-                string label = names[i] + "  (" + count + ")";
-                if (count > 0) label += "  -  " + Format.Bytes(bytes);
-                _categoryList.Items.Add(label);
+                items.Add(new CategoryRail.Item
+                {
+                    Title = CategoryInfo.Name(order[i]),
+                    Category = order[i],
+                    Count = count,
+                    Bytes = bytes
+                });
             }
 
-            _categoryList.EndUpdate();
-
-            if (_categoryList.Items.Count > 0) _categoryList.SelectedIndex = 0;
+            _rail.SetItems(items, _rail.SelectedIndex);
         }
 
-        private void CategoryChanged(object sender, EventArgs e)
+        private void ApplyFilter(bool keepSelection)
         {
-            BindList();
-        }
+            CategoryRail.Item selected = _rail.SelectedItem;
+            Category? filter = selected != null ? selected.Category : null;
 
-        private void BindList()
-        {
-            int index = _categoryList.SelectedIndex;
-            if (index < 0 || index >= _categories.Length) index = 0;
-            Category? filter = _categories[index];
-
-            _visible.Clear();
+            _visible = new List<Finding>();
             for (int i = 0; i < _findings.Count; i++)
             {
                 if (filter.HasValue && _findings[i].Category != filter.Value) continue;
                 _visible.Add(_findings[i]);
             }
 
-            _binding = true;
-            _list.BeginUpdate();
-            _list.Items.Clear();
-
-            for (int i = 0; i < _visible.Count; i++)
-            {
-                Finding finding = _visible[i];
-                ListViewItem item = new ListViewItem(finding.Title);
-                item.SubItems.Add(LocationOf(finding));
-                item.SubItems.Add(Format.Bytes(finding.Bytes));
-                item.SubItems.Add(finding.SafetyLabel);
-                item.Tag = finding;
-                item.ForeColor = ColourFor(finding.Level);
-                item.Checked = _checked.Contains(finding.Id);
-                item.Font = Theme.Body;
-                _list.Items.Add(item);
-            }
-
-            _list.EndUpdate();
-            _binding = false;
-
-            _countLabel.Text = _visible.Count == _findings.Count
-                ? Format.Count(_findings.Count) + " items"
-                : Format.Count(_visible.Count) + " of " + Format.Count(_findings.Count) + " items";
-
-            _emptyState.Visible = _visible.Count == 0;
-            _list.Visible = _visible.Count > 0;
-
-            UpdateHeader();
-            ClearDetail();
+            ApplySort();
+            _grid.SetItems(_visible, keepSelection);
+            UpdateEmptyState();
         }
 
-        private static string LocationOf(Finding finding)
+        private void UpdateToolbar()
         {
-            if (finding.IsDuplicateGroup)
-            {
-                string dir = SafeDirectory(finding.KeeperPath);
-                return string.IsNullOrEmpty(dir) ? finding.KeeperPath : dir;
-            }
+            CategoryRail.Item selected = _rail.SelectedItem;
+            bool all = selected == null || !selected.Category.HasValue;
 
-            string parent = DiskScanner.SafeParent(finding.Path);
-            return string.IsNullOrEmpty(parent) ? finding.Path : parent;
+            _titleLabel.Text = all ? "All items" : CategoryInfo.Name(selected.Category.Value);
+            _blurbLabel.Text = all
+                ? "Everything the scan found, in one place."
+                : CategoryInfo.Blurb(selected.Category.Value);
+
+            long bytes = 0;
+            for (int i = 0; i < _visible.Count; i++) bytes += _visible[i].Bytes;
+
+            _metaLabel.Text = _visible.Count == 0
+                ? "empty"
+                : _visible.Count + (_visible.Count == 1 ? " item" : " items") + "  ·  " + Format.Bytes(bytes);
         }
 
-        private static string SafeDirectory(string path)
+        private void UpdateEmptyState()
         {
-            try { return Path.GetDirectoryName(path); }
-            catch (Exception) { return path; }
-        }
+            bool empty = _visible.Count == 0;
+            _grid.Visible = !empty;
+            _empty.Visible = empty;
 
-        private static Color ColourFor(Safety level)
-        {
-            switch (level)
+            if (!empty) return;
+
+            if (_findings.Count == 0)
             {
-                case Safety.Safe: return Theme.Text;
-                case Safety.Caution: return Theme.Caution;
-                default: return Theme.Review;
-            }
-        }
-
-        private void ItemCheck(object sender, ItemCheckEventArgs e)
-        {
-            if (_binding) return;
-
-            ListViewItem item = _list.Items[e.Index];
-            Finding finding = item.Tag as Finding;
-            if (finding == null) return;
-
-            if (e.NewValue == CheckState.Checked) _checked.Add(finding.Id);
-            else _checked.Remove(finding.Id);
-        }
-
-        private void SelectionChanged(object sender, EventArgs e)
-        {
-            if (_list.SelectedItems.Count == 0)
-            {
-                ClearDetail();
-                return;
-            }
-
-            Finding finding = _list.SelectedItems[0].Tag as Finding;
-            if (finding == null)
-            {
-                ClearDetail();
-                return;
-            }
-
-            _detailTitle.Text = finding.Title;
-            _detailTitle.ForeColor = ColourFor(finding.Level);
-
-            string meta = Format.Bytes(finding.Bytes) + "  -  " + Format.Count(finding.FileCount) + " file" + (finding.FileCount == 1 ? "" : "s") + "  -  " + finding.SafetyLabel;
-            if (finding.IsDuplicateGroup)
-            {
-                meta += "  -  " + finding.DeletePaths.Count + " cop" + (finding.DeletePaths.Count == 1 ? "y" : "ies") + " to remove";
-            }
-            _detailMeta.Text = meta;
-
-            _detailWhy.Text = finding.Why;
-
-            if (finding.IsDuplicateGroup)
-            {
-                _detailProject.Text = "Keeping: " + finding.KeeperPath;
-            }
-            else if (!string.IsNullOrEmpty(finding.MarkerPath))
-            {
-                _detailProject.Text = "Project file: " + finding.MarkerPath;
+                if (!_scanned)
+                {
+                    _empty.Kind = ItemKind.Build;
+                    _empty.SetText("Nothing scanned yet",
+                        "Choose a folder above and press Scan. BinDay looks for build junk, caches, old installers, duplicate files, big media and leftover app packages.");
+                }
+                else
+                {
+                    _empty.Kind = ItemKind.Cache;
+                    _empty.SetText("Nothing to clean here",
+                        "The scan finished without finding anything it could offer to remove. Try a broader folder, such as your user folder or a projects folder.");
+                }
             }
             else
             {
-                _detailProject.Text = finding.Path;
+                CategoryRail.Item selected = _rail.SelectedItem;
+                string name = selected == null || !selected.Category.HasValue ? "this collection" : selected.Title;
+
+                _empty.Kind = selected != null && selected.Category.HasValue
+                    ? CategoryInfo.Shape(selected.Category.Value)
+                    : ItemKind.Build;
+
+                _empty.SetText("Nothing in " + name,
+                    "This collection is empty. Pick another one on the left — the counts update as you scan.");
             }
         }
 
-        private void ClearDetail()
+        private void UpdateInspector()
         {
-            _detailTitle.Text = "Nothing selected";
-            _detailTitle.ForeColor = Theme.Text;
-            _detailMeta.Text = string.Empty;
-            _detailWhy.Text = "Tick an item on the left to see why it is safe to remove.";
-            _detailProject.Text = string.Empty;
+            Finding primary = _grid.Primary;
+            bool ticked = primary != null && _grid.Checked.Contains(primary.Id);
+            _inspector.Display(primary, _mode, ticked);
         }
 
-        private void UpdateHeader()
+        private void UpdateActionBar()
         {
-            long total = 0;
             int count = 0;
+            long bytes = 0;
+
             for (int i = 0; i < _findings.Count; i++)
             {
-                total += _findings[i].Bytes;
+                if (!_grid.Checked.Contains(_findings[i].Id)) continue;
                 count++;
+                bytes += _findings[i].Bytes;
             }
 
-            _headerNumber.Text = Format.Bytes(total);
-            _headerCaption.Text = count == 0
-                ? "nothing to clean yet"
-                : Format.Count(count) + " item" + (count == 1 ? "" : "s") + " can be freed";
+            if (count == 0)
+            {
+                _tickedLabel.Text = "Nothing ticked yet";
+                _hintLabel.Text = "Tick items to build a cleanup list. Nothing is removed until you confirm.";
+            }
+            else
+            {
+                _tickedLabel.Text = count + (count == 1 ? " item ticked" : " items ticked") + "  ·  " + Format.Bytes(bytes);
+                _hintLabel.Text = _mode == DeleteMode.Recycle
+                    ? "All of them go to the Recycle Bin, so they can be restored."
+                    : "Only items marked Safe are deleted permanently. The rest go to the Recycle Bin.";
+            }
+
+            _cleanButton.Enabled = count > 0;
+            _clearButton.Enabled = count > 0;
+            _cleanButton.Text = count == 0
+                ? "Clean"
+                : (_mode == DeleteMode.Permanent ? "Delete " : "Clean ") + count +
+                  (count == 1 ? " item" : " items") + "  ·  " + Format.Bytes(bytes);
+        }
+
+        private void TickSafeClick(object sender, EventArgs e)
+        {
+            int added = 0;
+            for (int i = 0; i < _visible.Count; i++)
+            {
+                if (_visible[i].Level != Safety.Safe) continue;
+                if (_grid.Checked.Add(_visible[i].Id)) added++;
+            }
+
+            _grid.Invalidate();
+            UpdateActionBar();
+            UpdateInspector();
+            SetStatus(added == 0
+                ? "Nothing marked Safe in this collection."
+                : "Ticked " + added + " Safe item" + (added == 1 ? "" : "s") + " in this collection.");
+        }
+
+        private long TotalBytes()
+        {
+            long total = 0;
+            for (int i = 0; i < _findings.Count; i++) total += _findings[i].Bytes;
+            return total;
         }
 
         // ------------------------------------------------------------- cleaning
 
-        private List<Finding> SelectedFindings()
+        private void CleanClick(object sender, EventArgs e)
         {
             List<Finding> selected = new List<Finding>();
             for (int i = 0; i < _findings.Count; i++)
             {
-                if (_checked.Contains(_findings[i].Id)) selected.Add(_findings[i]);
+                if (_grid.Checked.Contains(_findings[i].Id)) selected.Add(_findings[i]);
             }
-            return selected;
-        }
 
-        private void SelectSafeClick(object sender, EventArgs e)
-        {
-            for (int i = 0; i < _visible.Count; i++)
-            {
-                if (_visible[i].Level == Safety.Safe) _checked.Add(_visible[i].Id);
-            }
-            BindList();
-            SetStatus("Ticked every item marked Safe in the current category.");
-        }
-
-        private void ClearTicksClick(object sender, EventArgs e)
-        {
-            _checked.Clear();
-            BindList();
-        }
-
-        private void RecycleClick(object sender, EventArgs e)
-        {
-            List<Finding> selected = SelectedFindings();
             if (selected.Count == 0)
             {
-                MessageBox.Show(this, "Tick the items you want to remove first.", "BinDay", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                SetStatus("Tick something first.");
                 return;
             }
 
-            long bytes = 0;
-            for (int i = 0; i < selected.Count; i++) bytes += selected[i].Bytes;
-
-            DialogResult answer = MessageBox.Show(this,
-                "Move " + selected.Count + " item" + (selected.Count == 1 ? "" : "s") + " (" + Format.Bytes(bytes) + ") to the Recycle Bin?\n\nYou can put them back from the Recycle Bin afterwards.",
-                "BinDay", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-
-            if (answer != DialogResult.Yes) return;
-
-            RunCleanup(selected, DeleteMode.Recycle);
-        }
-
-        private void DeleteClick(object sender, EventArgs e)
-        {
-            List<Finding> selected = SelectedFindings();
-            if (selected.Count == 0)
+            using (ConfirmForm dialog = new ConfirmForm(selected, _mode))
             {
-                MessageBox.Show(this, "Tick the items you want to remove first.", "BinDay", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
+                if (dialog.ShowDialog(this) != DialogResult.OK) return;
             }
 
-            int notSafe = 0;
-            long bytes = 0;
-            for (int i = 0; i < selected.Count; i++)
-            {
-                if (selected[i].Level != Safety.Safe) notSafe++;
-                bytes += selected[i].Bytes;
-            }
-
-            string message = "Permanently delete " + selected.Count + " item" + (selected.Count == 1 ? "" : "s") + " (" + Format.Bytes(bytes) + ")?\n\nThis cannot be undone.";
-            if (notSafe > 0)
-            {
-                message += "\n\n" + notSafe + " item" + (notSafe == 1 ? " is" : "s are") + " not marked Safe and will be skipped. Use the Recycle Bin for those.";
-            }
-
-            DialogResult answer = MessageBox.Show(this, message, "BinDay", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2);
-            if (answer != DialogResult.Yes) return;
-
-            RunCleanup(selected, DeleteMode.Permanent);
+            RunCleanup(selected, _mode);
         }
 
         private async void RunCleanup(List<Finding> selected, DeleteMode mode)
@@ -933,7 +1319,7 @@ namespace BinDay.App
             CancellationTokenSource cleanup = new CancellationTokenSource();
             IProgress<CleanupProgress> progress = new Progress<CleanupProgress>(delegate (CleanupProgress p)
             {
-                SetStatus("Removing " + p.Current);
+                SetStatus("Removing " + Ink.ShortPath(p.Current, 90));
             });
 
             CleanupReport report = null;
@@ -945,13 +1331,8 @@ namespace BinDay.App
                 {
                     report = Cleaner.Run(selected, mode, new WindowsRecycler(), progress, cleanup.Token);
                 }
-                catch (OperationCanceledException)
-                {
-                }
-                catch (Exception ex)
-                {
-                    failure = ex;
-                }
+                catch (OperationCanceledException) { }
+                catch (Exception ex) { failure = ex; }
             });
 
             cleanup.Dispose();
@@ -960,7 +1341,9 @@ namespace BinDay.App
 
             if (failure != null)
             {
-                MessageBox.Show(this, "The cleanup failed:\n\n" + failure.Message, "BinDay", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                SetStatus("The cleanup failed: " + failure.Message);
+                MessageBox.Show(this, "The cleanup failed:\n\n" + failure.Message, "BinDay",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -973,15 +1356,16 @@ namespace BinDay.App
             History.Append(report, mode, selected, null);
 
             RemoveCleanedFindings(selected);
-            PopulateCategories();
-            BindList();
-            UpdateHeader();
+            _grid.Checked.Clear();
+            RefreshCategories();
+            ApplyFilter(false);
+            UpdateActionBar();
 
             string summary = "Freed " + Format.Bytes(report.BytesFreed) + ".";
             if (report.Failed > 0) summary += " " + report.Failed + " item(s) could not be removed.";
             if (report.Refused > 0) summary += " " + report.Refused + " item(s) were skipped for safety.";
-            SetStatus(summary);
 
+            SetStatus(summary);
             MessageBox.Show(this, summary, "BinDay", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
@@ -1004,20 +1388,13 @@ namespace BinDay.App
                 if (!stillThere)
                 {
                     _findings.Remove(finding);
-                    _checked.Remove(finding.Id);
+                    _grid.Checked.Remove(finding.Id);
                 }
             }
         }
 
-        private void SetStatus(string text)
-        {
-            if (_statusLabel != null) _statusLabel.Text = text;
-        }
+        // ------------------------------------------------------------- shortcut
 
-        /// <summary>
-        /// Puts a shortcut to this copy of BinDay on the Desktop, so a portable
-        /// download in your Downloads folder is still easy to find later.
-        /// </summary>
         private void ShortcutClick(object sender, EventArgs e)
         {
             try
@@ -1033,8 +1410,7 @@ namespace BinDay.App
 
                 if (string.IsNullOrEmpty(desktop) || !Directory.Exists(desktop))
                 {
-                    MessageBox.Show(this, "The Desktop folder could not be found, so no shortcut was created.",
-                        "BinDay", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    SetStatus("The Desktop folder could not be found, so no shortcut was created.");
                     return;
                 }
 
@@ -1042,13 +1418,13 @@ namespace BinDay.App
                 CreateShortcut(link, exe, folder);
 
                 SetStatus("Desktop shortcut created.");
-                MessageBox.Show(this, "A BinDay shortcut was placed on your Desktop.",
-                    "BinDay", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(this, "A BinDay shortcut was placed on your Desktop.", "BinDay",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, "The shortcut could not be created:\n\n" + ex.Message,
-                    "BinDay", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(this, "The shortcut could not be created:\n\n" + ex.Message, "BinDay",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -1082,6 +1458,110 @@ namespace BinDay.App
 
                 try { Marshal.ReleaseComObject(shell); } catch (Exception) { }
             }
+        }
+
+        // ----------------------------------------------------------- preference
+
+        private static string PreferencesPath
+        {
+            get
+            {
+                return Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "BinDay", "ui.txt");
+            }
+        }
+
+        private void LoadPreferences()
+        {
+            try
+            {
+                if (!File.Exists(PreferencesPath)) return;
+
+                string[] lines = File.ReadAllLines(PreferencesPath);
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    string line = lines[i];
+                    int split = line.IndexOf('=');
+                    if (split <= 0) continue;
+
+                    string key = line.Substring(0, split).Trim();
+                    string value = line.Substring(split + 1).Trim();
+
+                    if (key == "view")
+                    {
+                        try
+                        {
+                            _view = (GridView)Enum.Parse(typeof(GridView), value, true);
+                        }
+                        catch (Exception) { }
+                    }
+                    else if (key == "sort")
+                    {
+                        try
+                        {
+                            _sort = (SortField)Enum.Parse(typeof(SortField), value, true);
+                        }
+                        catch (Exception) { }
+                    }
+                    else if (key == "desc")
+                    {
+                        _descending = value == "1";
+                    }
+                }
+            }
+            catch (Exception) { }
+
+            _grid.ViewMode = _view;
+            _grid.Sort = _sort;
+            _grid.SortDescending = _descending;
+
+            foreach (KeyValuePair<GridView, PillButton> pair in _viewButtons)
+            {
+                pair.Value.Toggled = pair.Key == _view;
+            }
+
+            _sortButton.Text = "Sort: " + SortName(_sort);
+            _directionButton.Text = _descending ? "↓" : "↑";
+        }
+
+        private void SavePreferences()
+        {
+            try
+            {
+                string folder = Path.GetDirectoryName(PreferencesPath);
+                if (!string.IsNullOrEmpty(folder)) Directory.CreateDirectory(folder);
+
+                File.WriteAllLines(PreferencesPath, new[]
+                {
+                    "view=" + _view,
+                    "sort=" + _sort,
+                    "desc=" + (_descending ? "1" : "0")
+                });
+            }
+            catch (Exception) { }
+        }
+
+        private void SetStatus(string text)
+        {
+            if (_statusLabel != null) _statusLabel.Text = text;
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.F5)
+            {
+                ScanClick(this, EventArgs.Empty);
+                return true;
+            }
+
+            if (keyData == Keys.Escape && _busy)
+            {
+                CancelScan();
+                return true;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
         }
     }
 }

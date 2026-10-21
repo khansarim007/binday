@@ -3,10 +3,11 @@ BinDay - a Windows disk cleaner
 
 WHAT IT IS
   BinDay looks for things your PC does not need any more: build output,
-  dependency folders, package caches, temporary files, old installers and
-  duplicate files. It shows you every item with the size it takes up and a
-  plain explanation of why it is safe to remove. Nothing is deleted until you
-  tick it and confirm.
+  dependency folders, package caches, temporary files, old installers,
+  duplicate files, oversized videos and photos, leftover app packages and
+  redundant copies of the same installer. It shows you every item with the
+  size it takes up and a plain explanation of what would happen if you
+  removed it. Nothing is deleted until you tick it and confirm.
 
 INSTALL
   1. Unzip this folder anywhere (Desktop is fine).
@@ -22,12 +23,20 @@ FIRST RUN
   The folder to scan is pre-filled with your user profile. Change it if you
   want to scan a project folder instead, then press Scan.
 
-  - Tick the items you want gone (or press "Tick all Safe items").
-  - Press "Move to Recycle Bin" (recoverable) or "Delete permanently".
+  - Pick a collection on the left (Dev junk, Caches, Videos, App packages,
+    Redundant installs and so on) or stay on "All items".
+  - Switch between large cards, a compact list and a sortable details table
+    with the buttons on the right.
+  - Click an item to read exactly what it is, what would happen if you
+    removed it, and how to get it back.
+  - Tick the items you want gone (the tick box on the card, the Space key, or
+    "Tick for cleanup" in the panel on the right).
+  - Choose "Recycle Bin" or "Delete permanently", then press the big button
+    and check the review screen.
   - Only items marked Safe can be deleted permanently. Everything else is
     refused on purpose.
-  - "Cleanup history" at the bottom of the sidebar shows what was removed in
-    the past and how much space that freed.
+  - "Cleanup history" in the ... menu shows what was removed in the past and
+    how much space that freed.
 
 ALSO WORKS FROM THE COMMAND LINE
   BinDay.exe "C:\path\to\folder"
@@ -41,3 +50,4 @@ NOTES
   - Items moved to the Recycle Bin still use disk space until you empty it.
   - Cleanup history is written to %LOCALAPPDATA%\BinDay\history.jsonl.
   - Errors are written to %LOCALAPPDATA%\BinDay\error.log.
+  - Your view and sort choices are remembered in %LOCALAPPDATA%\BinDay\ui.txt.

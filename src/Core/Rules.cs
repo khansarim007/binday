@@ -18,8 +18,11 @@ namespace BinDay.Core
         public Safety Level;
         public string[] Names;
         public string[] Markers;
+        public string Kind;
+        public string Recovery;
 
-        public DirRule(string id, string title, Category category, Safety level, string why, string[] names, string[] markers)
+        public DirRule(string id, string title, Category category, Safety level, string why, string[] names, string[] markers,
+            string kind = null, string recovery = null)
         {
             Id = id;
             Title = title;
@@ -28,6 +31,8 @@ namespace BinDay.Core
             Why = why;
             Names = names;
             Markers = markers;
+            Kind = kind;
+            Recovery = recovery;
         }
     }
 
@@ -41,75 +46,93 @@ namespace BinDay.Core
         {
             new DirRule("node_modules", "node_modules (npm)", Category.Dev, Safety.Safe,
                 "Installed packages. Your project rebuilds them with a single 'npm install'.",
-                new[] { "node_modules" }, NodeMarkers),
+                new[] { "node_modules" }, NodeMarkers,
+                "npm dependency folder", "Run npm install in this project folder to get it back."),
 
             new DirRule("next", ".next (Next.js)", Category.Dev, Safety.Safe,
                 "Generated on every build. Re-running the build recreates it.",
-                new[] { ".next" }, NodeMarkers),
+                new[] { ".next" }, NodeMarkers,
+                "Next.js build output", "Run the build again to get it back."),
 
             new DirRule("nuxt", ".nuxt (Nuxt)", Category.Dev, Safety.Safe,
                 "Generated on every build. Re-running the build recreates it.",
-                new[] { ".nuxt" }, NodeMarkers),
+                new[] { ".nuxt" }, NodeMarkers,
+                "Nuxt build output", "Run the build again to get it back."),
 
             new DirRule("sveltekit", ".svelte-kit (Svelte)", Category.Dev, Safety.Safe,
                 "Generated on every build. Re-running the build recreates it.",
-                new[] { ".svelte-kit" }, NodeMarkers),
+                new[] { ".svelte-kit" }, NodeMarkers,
+                "SvelteKit build output", "Run the build again to get it back."),
 
             new DirRule("angular", ".angular (Angular)", Category.Dev, Safety.Safe,
                 "Angular's local build cache. Rebuilt automatically on the next build.",
-                new[] { ".angular" }, NodeMarkers),
+                new[] { ".angular" }, NodeMarkers,
+                "Angular build cache", "Run the build again to get it back."),
 
             new DirRule("turbo", ".turbo (Turborepo)", Category.Dev, Safety.Safe,
                 "Task cache for turbo. Rebuilt automatically on the next build.",
-                new[] { ".turbo" }, NodeMarkers),
+                new[] { ".turbo" }, NodeMarkers,
+                "Turborepo cache", "Run the build again to get it back."),
 
             new DirRule("parcel", ".parcel-cache (Parcel)", Category.Dev, Safety.Safe,
                 "Parcel's build cache. Rebuilt automatically on the next build.",
-                new[] { ".parcel-cache" }, NodeMarkers),
+                new[] { ".parcel-cache" }, NodeMarkers,
+                "Parcel build cache", "Run the build again to get it back."),
 
             new DirRule("coverage", "coverage (test report)", Category.Dev, Safety.Safe,
                 "Generated test report. Regenerated the next time you run the tests.",
-                new[] { "coverage" }, NodeMarkers),
+                new[] { "coverage" }, NodeMarkers,
+                "test coverage report", "Run the tests again to regenerate it."),
 
             new DirRule("dotnet_obj", "obj (.NET build)", Category.Dev, Safety.Safe,
                 "Intermediate build files for a .NET project. The next build recreates them.",
-                new[] { "obj" }, DotNetMarkers),
+                new[] { "obj" }, DotNetMarkers,
+                ".NET intermediate build files", "Build the project again to get it back."),
 
             new DirRule("dotnet_bin", "bin (.NET build)", Category.Dev, Safety.Safe,
                 "Compiled output for a .NET project. The next build recreates it.",
-                new[] { "bin" }, DotNetMarkers),
+                new[] { "bin" }, DotNetMarkers,
+                ".NET build output", "Build the project again to get it back."),
 
             new DirRule("vs", ".vs (Visual Studio)", Category.Dev, Safety.Caution,
                 "Mostly cached build data, but it can hold a few of your own window layouts. Visual Studio recreates it.",
-                new[] { ".vs" }, DotNetMarkers),
+                new[] { ".vs" }, DotNetMarkers,
+                "Visual Studio working data", "Visual Studio recreates it when you reopen the solution."),
 
             new DirRule("rust_target", "target (Rust build)", Category.Dev, Safety.Safe,
                 "Compiled Rust artifacts. 'cargo build' recreates them.",
-                new[] { "target" }, new[] { "Cargo.toml" }),
+                new[] { "target" }, new[] { "Cargo.toml" },
+                "Rust build output", "Run cargo build again to get it back."),
 
             new DirRule("venv", ".venv (Python)", Category.Dev, Safety.Safe,
                 "Installed Python packages for this project. 'pip install -r requirements.txt' recreates it.",
-                new[] { ".venv", "venv" }, PythonMarkers),
+                new[] { ".venv", "venv" }, PythonMarkers,
+                "Python virtual environment", "Run pip install -r requirements.txt in this project folder to get it back."),
 
             new DirRule("pycache", "__pycache__ (Python)", Category.Dev, Safety.Safe,
                 "Compiled Python bytecode. Python regenerates it the moment the code runs again.",
-                new[] { "__pycache__" }, null),
+                new[] { "__pycache__" }, null,
+                "Python bytecode cache", "Python recreates it the next time the code runs."),
 
             new DirRule("pytest_cache", "Python tool caches (.pytest_cache)", Category.Dev, Safety.Safe,
                 "Test run cache. Regenerated on the next test run.",
-                new[] { ".pytest_cache", ".mypy_cache", ".ruff_cache" }, null),
+                new[] { ".pytest_cache", ".mypy_cache", ".ruff_cache" }, null,
+                "Python tool cache", "Run the tests again to regenerate it."),
 
             new DirRule("dart_tool", ".dart_tool (Flutter)", Category.Dev, Safety.Safe,
                 "Generated package metadata and build cache. 'flutter pub get' recreates it.",
-                new[] { ".dart_tool" }, new[] { "pubspec.yaml" }),
+                new[] { ".dart_tool" }, new[] { "pubspec.yaml" },
+                "Flutter package cache", "Run flutter pub get again to get it back."),
 
             new DirRule("gradle_project", ".gradle (project)", Category.Dev, Safety.Safe,
                 "Project-local Gradle cache. The next build recreates it. (Your global cache in the home folder is listed separately.)",
-                new[] { ".gradle" }, new[] { "settings.gradle", "settings.gradle.kts", "build.gradle", "build.gradle.kts" }),
+                new[] { ".gradle" }, new[] { "settings.gradle", "settings.gradle.kts", "build.gradle", "build.gradle.kts" },
+                "Gradle project cache", "The next Gradle build recreates it."),
 
             new DirRule("zig", ".zig-cache (Zig)", Category.Dev, Safety.Safe,
                 "Zig's local build cache. Rebuilt automatically.",
-                new[] { ".zig-cache", "zig-out" }, new[] { "build.zig" })
+                new[] { ".zig-cache", "zig-out" }, new[] { "build.zig" },
+                "Zig build output", "Run zig build again to get it back.")
         };
 
         /// <summary>Folder names we never walk into, never offer to delete.</summary>
@@ -182,33 +205,46 @@ namespace BinDay.Core
             if (!string.IsNullOrEmpty(local))
             {
                 Add(list, Path.Combine(local, "npm-cache"), "npm download cache", Category.Cache, Safety.Safe,
-                    "Packages npm has already downloaded. Re-downloaded automatically if you ever need them again.");
+                    "Packages npm has already downloaded. Re-downloaded automatically if you ever need them again.",
+                    "npm package cache", "npm downloads the packages again the next time it needs them.");
                 Add(list, Path.Combine(local, "Yarn", "Cache"), "Yarn download cache", Category.Cache, Safety.Safe,
-                    "Packages Yarn has already downloaded. Re-downloaded automatically if you ever need them again.");
+                    "Packages Yarn has already downloaded. Re-downloaded automatically if you ever need them again.",
+                    "Yarn package cache", "Yarn downloads the packages again the next time it needs them.");
                 Add(list, Path.Combine(local, "pnpm", "store"), "pnpm package store", Category.Cache, Safety.Safe,
-                    "Packages pnpm has already downloaded. Re-downloaded automatically if you ever need them again.");
+                    "Packages pnpm has already downloaded. Re-downloaded automatically if you ever need them again.",
+                    "pnpm package store", "pnpm downloads the packages again the next time it needs them.");
                 Add(list, Path.Combine(local, "pip", "Cache"), "pip download cache", Category.Cache, Safety.Safe,
-                    "Python wheels pip has already downloaded. Re-downloaded automatically if you ever need them again.");
+                    "Python wheels pip has already downloaded. Re-downloaded automatically if you ever need them again.",
+                    "pip wheel cache", "pip downloads the wheels again the next time it needs them.");
                 Add(list, Path.Combine(local, "Temp"), "Temporary files", Category.Temp, Safety.Safe,
-                    "Scratch space that applications are supposed to clean up themselves. In-use files are skipped.");
+                    "Scratch space that applications are supposed to clean up themselves. In-use files are skipped.",
+                    "temporary files", "Whichever app needs scratch space creates it again.");
             }
 
             if (!string.IsNullOrEmpty(profile))
             {
                 Add(list, Path.Combine(profile, ".nuget", "packages"), "NuGet package cache", Category.Cache, Safety.Caution,
-                    "Every NuGet package on this machine. Projects restore what they need, but the next build will need the network.");
+                    "Every NuGet package on this machine. Projects restore what they need, but the next build will need the network.",
+                    "NuGet package cache", "The next build restores the packages again, which needs an internet connection.");
                 Add(list, Path.Combine(profile, ".gradle", "caches"), "Gradle cache", Category.Cache, Safety.Caution,
-                    "Every Gradle dependency on this machine. Projects re-download what they need, but the next build will need the network.");
+                    "Every Gradle dependency on this machine. Projects re-download what they need, but the next build will need the network.",
+                    "Gradle dependency cache", "The next build downloads the dependencies again, which needs an internet connection.");
                 Add(list, Path.Combine(profile, ".m2", "repository"), "Maven repository", Category.Cache, Safety.Caution,
-                    "Every Maven artifact on this machine. Projects re-download what they need, but the next build will need the network.");
+                    "Every Maven artifact on this machine. Projects re-download what they need, but the next build will need the network.",
+                    "Maven artifact cache", "The next build downloads the artifacts again, which needs an internet connection.");
             }
 
             return list;
         }
 
-        private static void Add(List<CacheLocation> list, string path, string title, Category category, Safety level, string why)
+        private static void Add(List<CacheLocation> list, string path, string title, Category category, Safety level, string why,
+            string kind, string recovery)
         {
-            list.Add(new CacheLocation { Path = path, Title = title, Why = why, Level = level, Category = category });
+            list.Add(new CacheLocation
+            {
+                Path = path, Title = title, Why = why, Level = level, Category = category,
+                Kind = kind, Recovery = recovery
+            });
         }
 
         /// <summary>Downloads and Desktop: where installers pile up.</summary>

@@ -10,7 +10,7 @@ namespace BinDay.App
     internal sealed class HistoryForm : Form
     {
         private readonly ListView _list;
-        private readonly Button _clearButton;
+        private readonly PillButton _clearButton;
 
         public HistoryForm()
         {
@@ -35,9 +35,10 @@ namespace BinDay.App
             Label heading = Ui.Label("Cleanup history", Theme.Large, Theme.Text, false);
             heading.Dock = DockStyle.Fill;
             heading.TextAlign = ContentAlignment.MiddleLeft;
+            heading.AutoEllipsis = true;
 
             _list = new ListView();
-            Ui.ConfigureListView(_list);
+            DarkList.Attach(_list);
             _list.Dock = DockStyle.Fill;
             _list.Columns.Add("When", 175);
             _list.Columns.Add("Action", 90);
@@ -52,9 +53,11 @@ namespace BinDay.App
                 _list.Columns[5].Width = width;
             };
 
-            _clearButton = Ui.FlatButton("Clear history", Theme.Surface, Theme.Text, false);
-            _clearButton.Dock = DockStyle.Right;
-            _clearButton.Width = 130;
+            _clearButton = new PillButton();
+            _clearButton.Text = "Clear history";
+            _clearButton.Style = PillButton.Kind.Outline;
+            _clearButton.Width = 140;
+            _clearButton.Height = 34;
             _clearButton.Click += delegate
             {
                 if (MessageBox.Show(this, "Delete the stored cleanup history?\n\nNothing else is touched.",
@@ -67,9 +70,24 @@ namespace BinDay.App
                 LoadEntries();
             };
 
+            FlowLayoutPanel footer = new FlowLayoutPanel();
+            footer.Dock = DockStyle.Fill;
+            footer.FlowDirection = FlowDirection.RightToLeft;
+            footer.WrapContents = false;
+            footer.Controls.Add(_clearButton);
+
+            PillButton close = new PillButton();
+            close.Text = "Close";
+            close.Style = PillButton.Kind.Ghost;
+            close.Width = 90;
+            close.Height = 34;
+            close.Margin = new Padding(8, 0, 0, 0);
+            close.Click += delegate { Close(); };
+            footer.Controls.Add(close);
+
             root.Controls.Add(heading, 0, 0);
             root.Controls.Add(_list, 0, 1);
-            root.Controls.Add(_clearButton, 0, 2);
+            root.Controls.Add(footer, 0, 2);
 
             Controls.Add(root);
 
@@ -95,6 +113,8 @@ namespace BinDay.App
                 item.SubItems.Add(Summarise(entry));
 
                 if (entry.Failed + entry.Refused > 0) item.ForeColor = Theme.Caution;
+                else item.ForeColor = Theme.Text;
+                for (int c = 0; c < item.SubItems.Count; c++) item.SubItems[c].ForeColor = Theme.TextMuted;
                 _list.Items.Add(item);
             }
 
@@ -108,7 +128,7 @@ namespace BinDay.App
                 empty.SubItems.Add("");
                 empty.SubItems.Add("");
                 empty.SubItems.Add("Run a scan and remove something to see it here.");
-                empty.ForeColor = Theme.TextMuted;
+                empty.ForeColor = Theme.TextDim;
                 _list.Items.Add(empty);
             }
         }

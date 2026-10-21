@@ -44,6 +44,12 @@ namespace BinDay.Tests
             Run("history is written as json", HistoryJson);
             Run("history can be read back", HistoryRoundTrip);
             Run("cancelling a scan works", Cancellation);
+            Run("big media files are listed for review", MediaFound);
+            Run("small media files are ignored", SmallMediaIgnored);
+            Run("media and large files are not counted twice", NoMediaDoubleCount);
+            Run("older installer versions are marked redundant", RedundantInstallers);
+            Run("installer names are grouped sensibly", InstallerKeys);
+            Run("the app explains what will happen", NarrativeText);
             Run("byte formatting", FormatBytes);
 
             Console.WriteLine();
@@ -612,6 +618,148 @@ namespace BinDay.Tests
                 Assert.True(threw, "scan cancelled");
             }
             finally { Delete(root); }
+        }
+
+        private static void MediaFound()
+        {
+            string root = NewTempRoot();
+            try
+            {
+                Write(root, "clip.mp4", Payload(4096, 1));
+                Write(root, "holiday.jpg", Payload(4096, 2));
+                Write(root, "podcast.mp3", Payload(4096, 3));
+                Write(root, "game.apk", Payload(4096, 4));
+
+                ScanOptions options = NewOptions(root);
+                options.ScanMedia = true;
+                options.VideoMinBytes = 1024;
+                options.ImageMinBytes = 1024;
+                options.AudioMinBytes = 1024;
+                options.AppPackageMinBytes = 1024;
+
+                ScanResult result = DiskScanner.Scan(options, null, CancellationToken.None);
+
+                Assert.Equal(1, result.Findings.Count(f => f.Category == Category.Video), "video listed");
+                Assert.Equal(1, result.Findings.Count(f => f.Category == Category.Image), "image listed");
+                Assert.Equal(1, result.Findings.Count(f => f.Category == Category.Audio), "audio listed");
+                Assert.Equal(1, result.Findings.Count(f => f.Category == Category.AppPackage), "package listed");
+                Assert.True(result.Findings.All(f => f.Level == Safety.Review), "media is review only");
+                Assert.Equal("clip.mp4", result.Findings.First(f => f.Category == Category.Video).Title, "file name");
+            }
+            finally { Delete(root); }
+        }
+
+        private static void SmallMediaIgnored()
+        {
+            string root = NewTempRoot();
+            try
+            {
+                Write(root, "tiny.mp4", Payload(16, 1));
+                Write(root, "tiny.jpg", Payload(16, 2));
+
+                ScanOptions options = NewOptions(root);
+                options.ScanMedia = true;
+                options.VideoMinBytes = 1024;
+                options.ImageMinBytes = 1024;
+
+                ScanResult result = DiskScanner.Scan(options, null, CancellationToken.None);
+
+                Assert.Equal(0, result.Findings.Count, "small media ignored");
+            }
+            finally { Delete(root); }
+        }
+
+        private static void NoMediaDoubleCount()
+        {
+            string root = NewTempRoot();
+            try
+            {
+                Write(root, "movie.mp4", Payload(8192, 1));
+
+                ScanOptions options = NewOptions(root);
+                options.ScanMedia = true;
+                options.VideoMinBytes = 1024;
+                options.LargeFileMinBytes = 1024;
+
+                ScanResult result = DiskScanner.Scan(options, null, CancellationToken.None);
+
+                Assert.Equal(1, result.Findings.Count, "listed once, as a video");
+                Assert.Equal(Category.Video, result.Findings[0].Category, "video wins over large file");
+            }
+            finally { Delete(root); }
+        }
+
+        private static void RedundantInstallers()
+        {
+            string root = NewTempRoot();
+            try
+            {
+                string downloads = Path.Combine(root, "Downloads");
+                Directory.CreateDirectory(downloads);
+
+                string older = Path.Combine(downloads, "VLC-3.0.18-win64.exe");
+                string newer = Path.Combine(downloads, "VLC-3.0.20-win64.exe");
+                File.WriteAllBytes(older, Payload(2048, 1));
+                File.WriteAllBytes(newer, Payload(2048, 2));
+                File.SetLastWriteTime(older, DateTime.Now.AddDays(-120));
+                File.SetLastWriteTime(newer, DateTime.Now.AddDays(-40));
+
+                ScanOptions options = NewOptions(root);
+                options.ScanInstallers = true;
+                options.ScanMedia = false;
+                options.InstallerMinBytes = 1024;
+                options.InstallerMinAgeDays = 30;
+                options.InstallerFolders.Add(downloads);
+
+                ScanResult result = DiskScanner.Scan(options, null, CancellationToken.None);
+
+                Assert.Equal(1, result.Findings.Count(f => f.Category == Category.Installer), "newest stays an installer");
+                Assert.Equal(1, result.Findings.Count(f => f.Category == Category.Redundant), "older is redundant");
+                Assert.True(result.Findings.First(f => f.Category == Category.Redundant).Path.EndsWith("3.0.18-win64.exe"), "older file flagged");
+                Assert.True(result.Findings.First(f => f.Category == Category.Redundant).Why.Contains("3.0.20"), "why names the newer copy");
+            }
+            finally { Delete(root); }
+        }
+
+        private static void InstallerKeys()
+        {
+            Assert.Equal(DiskScanner.InstallerKey("VLC-3.0.20-win64.exe"), DiskScanner.InstallerKey("vlc-3.0.18.exe"), "same app, different version");
+            Assert.Equal(DiskScanner.InstallerKey("Photoshop 2024 v25.1 setup.exe"), DiskScanner.InstallerKey("photoshop-2025.exe"), "version noise stripped");
+            Assert.True(DiskScanner.InstallerKey("setup.exe") != DiskScanner.InstallerKey("setup2.exe"), "bare setup names stay distinct");
+            Assert.Equal("vlc", DiskScanner.InstallerKey("vlc-3.0.20-win64.exe"), "key keeps the app name");
+        }
+
+        private static void NarrativeText()
+        {
+            Finding folder = new Finding
+            {
+                Path = @"C:\work\shop\node_modules",
+                Title = "node_modules (npm)",
+                Bytes = 2048,
+                FileCount = 12,
+                Level = Safety.Safe,
+                Category = Category.Dev,
+                Shape = ItemKind.Folder,
+                Kind = "npm dependency folder",
+                Recovery = "Run npm install in this project folder to get it back."
+            };
+
+            string recycle = Narrative.IfYouRemove(folder, DeleteMode.Recycle);
+            Assert.True(recycle.Contains("Recycle Bin"), "recycle mentioned");
+            Assert.True(recycle.Contains("12 files"), "file count mentioned");
+            Assert.True(recycle.Contains("Nothing outside"), "scope explained");
+            Assert.True(!recycle.Contains("cannot be undone"), "recycle is undoable");
+
+            string permanent = Narrative.IfYouRemove(folder, DeleteMode.Permanent);
+            Assert.True(permanent.Contains("permanently delete"), "permanent wording");
+            Assert.True(permanent.Contains("cannot be undone"), "warning present");
+
+            folder.Level = Safety.Review;
+            string refused = Narrative.IfYouRemove(folder, DeleteMode.Permanent);
+            Assert.True(refused.Contains("refuse"), "refusal explained");
+
+            Assert.True(Narrative.GetItBack(folder).Contains("npm install"), "recovery text");
+            Assert.True(Narrative.Meta(folder).Contains("2.0 KB"), "meta has size");
         }
 
         private static void FormatBytes()
