@@ -835,19 +835,20 @@ namespace BinDay.App
 
                 if (path == null)
                 {
-                    MessageBox.Show(this,
-                        "The download did not finish.\n\nOpen " + Updater.ReleasePage + " to fetch it by hand.",
-                        "BinDay", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    NoteForm.Show(this,
+                        "The download did not finish",
+                        "BinDay could not save the file. You can fetch it by hand at:",
+                        Updater.ReleasePage, "OK", null);
                     SetStatus("The download did not finish.");
                     return;
                 }
 
                 SetStatus("BinDay " + result.Latest + " saved to " + path);
 
-                MessageBox.Show(this,
-                    "BinDay " + result.Latest + " was saved as:\n\n" + path +
-                    "\n\nClose this window, delete the old BinDay.exe and run the new one.",
-                    "BinDay", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                NoteForm.Show(this,
+                    "BinDay " + result.Latest + " is ready",
+                    "Close this window, delete the old BinDay.exe and run the new one.",
+                    path, "OK", null);
 
                 try { System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + path + "\""); }
                 catch (Exception) { }
@@ -1417,7 +1418,14 @@ namespace BinDay.App
             if (report.Refused > 0) summary += " " + report.Refused + " item(s) were skipped for safety.";
 
             SetStatus(summary);
-            MessageBox.Show(this, summary, "BinDay", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            NoteForm.Show(this,
+                "Cleanup finished",
+                summary,
+                report.Removed + " item" + (report.Removed == 1 ? "" : "s") + " removed" +
+                (report.Refused > 0 ? ", " + report.Refused + " skipped for safety" : "") +
+                (report.Failed > 0 ? ", " + report.Failed + " could not be removed" : "") + ".",
+                "OK", null);
         }
 
         private void RemoveCleanedFindings(List<Finding> selected)
@@ -1469,13 +1477,13 @@ namespace BinDay.App
                 CreateShortcut(link, exe, folder);
 
                 SetStatus("Desktop shortcut created.");
-                MessageBox.Show(this, "A BinDay shortcut was placed on your Desktop.", "BinDay",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                NoteForm.Show(this, "Shortcut created",
+                    "BinDay now has an icon on your Desktop.",
+                    Path.Combine(desktop, "BinDay.lnk"), "OK", null);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, "The shortcut could not be created:\n\n" + ex.Message, "BinDay",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                NoteForm.Show(this, "The shortcut could not be created", ex.Message, null, "OK", null);
             }
         }
 
