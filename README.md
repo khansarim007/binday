@@ -139,7 +139,7 @@ version.
 ## Install
 
 **The quick way.** Download **[BinDay.exe](https://github.com/khansarim007/binday/releases/latest/download/BinDay.exe)**
-(180 KB) and double-click it. That is the whole app - there is nothing to
+(192 KB) and double-click it. That is the whole app - there is nothing to
 install, and it needs no admin rights. Windows 10 (1903+) and Windows 11 already
 include .NET Framework 4.8.
 
