@@ -63,7 +63,7 @@ namespace BinDay.App
         {
             _startPaths = args ?? new string[0];
 
-            Text = "BinDay";
+            Text = "BinDay " + Updater.CurrentVersion;
             Font = Theme.Body;
             BackColor = Theme.Background;
             ForeColor = Theme.Text;
@@ -782,7 +782,7 @@ namespace BinDay.App
         private void AboutClick(object sender, EventArgs e)
         {
             string message =
-                "BinDay " + Application.ProductVersion + "\n\n" +
+                "BinDay " + Updater.CurrentVersion + "\n\n" +
                 "A native Windows disk cleaner that shows you what it found, explains what would happen, " +
                 "and never removes anything you have not ticked and confirmed.\n\n" +
                 "Website: https://getbinday.vercel.app\n" +
@@ -795,12 +795,63 @@ namespace BinDay.App
         private void MoreClick(object sender, EventArgs e)
         {
             ContextMenuStrip menu = Ui.DarkMenu();
+            menu.Items.Add("Check for updates...", null, CheckForUpdates);
+            menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("Scan options...", null, OptionsClick);
             menu.Items.Add("Cleanup history", null, HistoryClick);
             menu.Items.Add("Create desktop shortcut", null, ShortcutClick);
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("About BinDay", null, AboutClick);
             menu.Show(_moreButton, new Point(0, _moreButton.Height + 4));
+        }
+
+        /// <summary>
+        /// Asks GitHub whether a newer release exists. This is the only network call
+        /// BinDay ever makes, and only because the user asked for it.
+        /// </summary>
+        private async void CheckForUpdates(object sender, EventArgs e)
+        {
+            SetStatus("Checking for updates...");
+
+            Updater.Result result = await Updater.CheckAsync(CancellationToken.None);
+            SetStatus("Checked for updates.");
+
+            using (UpdateForm dialog = new UpdateForm(Updater.CurrentVersion, result))
+            {
+                if (dialog.ShowDialog(this) != DialogResult.OK) return;
+
+                if (dialog.Action == UpdateForm.Choice.OpenPage)
+                {
+                    try { System.Diagnostics.Process.Start(Updater.ReleasePage); }
+                    catch (Exception) { }
+                    return;
+                }
+
+                if (dialog.Action != UpdateForm.Choice.Download) return;
+
+                SetStatus("Downloading BinDay " + result.Latest + "...");
+
+                string path = await Updater.DownloadAsync(result.Latest, CancellationToken.None);
+
+                if (path == null)
+                {
+                    MessageBox.Show(this,
+                        "The download did not finish.\n\nOpen " + Updater.ReleasePage + " to fetch it by hand.",
+                        "BinDay", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    SetStatus("The download did not finish.");
+                    return;
+                }
+
+                SetStatus("BinDay " + result.Latest + " saved to " + path);
+
+                MessageBox.Show(this,
+                    "BinDay " + result.Latest + " was saved as:\n\n" + path +
+                    "\n\nClose this window, delete the old BinDay.exe and run the new one.",
+                    "BinDay", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                try { System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + path + "\""); }
+                catch (Exception) { }
+            }
         }
 
         private void SortClick(object sender, EventArgs e)

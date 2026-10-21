@@ -121,7 +121,20 @@ Your view and sort choices are remembered between runs.
 - `.git`, `.svn`, `.hg` and `site-packages` are skipped.
 - Every cleanup is written to `%LOCALAPPDATA%\BinDay\history.jsonl` and can be
   read back inside the app.
-- No admin rights, no account, no network access, no telemetry.
+- No admin rights, no account, no telemetry. The only thing that ever touches
+  the network is the **Check for updates** command, and only when you press it.
+
+## Updating
+
+BinDay is a single portable file, so it cannot update itself in place while it
+is running. Instead, open the `...` menu and press **Check for updates**. If
+there is a newer release, BinDay shows the two versions side by side and
+downloads the new file into your Downloads folder for you - then it is one
+rename and you are on the new version.
+
+The same thing works without the app: the download button on the website always
+points at the newest release, so **Download** on the site is always the latest
+version.
 
 ## Install
 

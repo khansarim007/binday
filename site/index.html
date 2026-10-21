@@ -159,8 +159,10 @@
 
         <article class="card card-quiet">
           <h3>And nothing else</h3>
-          <p>No registry tweaks, no background services, no telemetry, no account,
-             no network access. No silent "cleanup" while you work.</p>
+          <p>No registry tweaks, no background services, no telemetry, no account.
+             The only thing that touches the network is the "Check for updates"
+             command, and only when you press it. No silent "cleanup" while you
+             work.</p>
         </article>
       </div>
     </div>
@@ -197,6 +199,7 @@
         <li><code>Windows</code>, <code>Program Files</code>, <code>ProgramData</code>, <code>AppData</code>, <code>$Recycle.Bin</code> and drive roots are never walked and never deleted.</li>
         <li>Symbolic links and junctions are never followed.</li>
         <li>Every cleanup is written to a local history you can read back in the app.</li>
+        <li>"Check for updates" tells you when a newer version is out and fetches it for you. Nothing else talks to the network.</li>
       </ul>
     </div>
   </section>
