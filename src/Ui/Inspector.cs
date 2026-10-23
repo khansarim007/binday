@@ -1,6 +1,8 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Text;
+using System.Linq;
 using System.Windows.Forms;
 using BinDay.Core;
 
@@ -138,7 +140,7 @@ namespace BinDay.App
 
             Grade(g, Theme.Safe, "Safe", "A tool rebuilds it automatically. BinDay can delete it permanently.", left, width, ref y);
             Grade(g, Theme.Caution, "Check", "Rebuildable, but it may need a command or the internet.", left, width, ref y);
-            Grade(g, Theme.Review, "Review", "Your own file or a setup you may still want. Recycle Bin only.", left, width, ref y);
+            Grade(g, Theme.Review, "Review", "Your own file or a setup you may still want. Recycle Bin only.");
 
             y += Px(18);
 
@@ -369,7 +371,6 @@ namespace BinDay.App
 
             y += Px(64) + Px(14);   // preview + gap
             y += Px(32);            // pills
-
             y += Px(18);            // section label
             y += Ink.Measure(g, _item.Why, Theme.Small, width, TextFormatFlags.WordBreak).Height + Px(2);
             y += Px(10);
@@ -396,8 +397,7 @@ namespace BinDay.App
 
             if (!string.IsNullOrEmpty(_item.MarkerPath))
             {
-                y += Px(12) + Ink.Measure(g, "Project file found next to it: " + _item.MarkerPath, Theme.Tiny, width,
-                    TextFormatFlags.WordBreak).Height + Px(2);
+                y += Px(12) + Ink.Measure(g, "Project file found next to it: " + _item.MarkerPath, Theme.Tiny, width, TextFormatFlags.WordBreak).Height + Px(2);
             }
 
             y += Px(20) + Px(34) + Px(16) + Px(12) + Px(18);

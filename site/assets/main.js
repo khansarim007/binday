@@ -1,42 +1,77 @@
-// BinDay landing page.
-//
-// The page is deliberately plain: it works with JavaScript disabled, in
-// print, and in screenshots. This file only smooths the "download" button
-// pulse on first view - nothing that can hide content.
+// BinDay - landing page
+// No frameworks, no build step. One stylesheet, system fonts, dark by default
+// with a light mode for people who prefer it.
 
-(function () {
-  "use strict";
-
-  var download = document.querySelector(".btn-primary");
-  if (!download) {
-    return;
+// Wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', function() {
+  // Mobile menu toggle
+  const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+  const mobileMenu = document.querySelector('.mobile-menu');
+  
+  if (mobileMenuBtn && mobileMenu) {
+    mobileMenuBtn.addEventListener('click', function() {
+      mobileMenu.classList.toggle('active');
+    });
   }
-
-  // A gentle nudge towards the download button the first time somebody
-  // scrolls past the hero, so the primary action is impossible to miss.
-  var nudged = false;
-
-  function nudge() {
-    if (nudged) {
-      return;
-    }
-
-    nudged = true;
-    download.animate(
-      [
-        { transform: "translateY(0)" },
-        { transform: "translateY(-3px)" },
-        { transform: "translateY(0)" }
-      ],
-      { duration: 420, easing: "ease-out" }
-    );
-
-    window.removeEventListener("scroll", nudge);
+  
+  // Desktop navigation hover effects
+  const navItems = document.querySelectorAll('.nav a');
+  navItems.forEach(item => {
+    item.addEventListener('mouseenter', function() {
+      this.style.color = getComputedStyle(document.documentElement).getPropertyValue('--accent');
+    });
+    
+    item.addEventListener('mouseleave', function() {
+      this.style.color = '';
+    });
+  });
+  
+  // Download button
+  const downloadBtn = document.querySelector('.btn-primary');
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.location.href = 'https://github.com/khansarim007/binday/releases/latest/download/BinDay.exe';
+    });
   }
-
-  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    return;
+  
+  // View source button
+  const viewSourceBtn = document.querySelector('.btn-ghost');
+  if (viewSourceBtn) {
+    viewSourceBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.location.href = 'https://github.com/khansarim007/binday';
+    });
   }
-
-  window.addEventListener("scroll", nudge, { passive: true, once: true });
-})();
+  
+  // Smooth scrolling for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      e.preventDefault();
+      const targetId = this.getAttribute('href').substring(1);
+      const targetElement = document.getElementById(targetId);
+      
+      if (targetElement) {
+        window.scrollTo({
+          top: targetElement.offsetTop - 80,
+          behavior: 'smooth'
+        });
+      }
+    });
+  });
+  
+  // Smooth scroll for internal links
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      e.preventDefault();
+      const targetId = this.getAttribute('href').substring(1);
+      const targetElement = document.getElementById(targetId);
+      
+      if (targetElement) {
+        window.scrollTo({
+          top: targetElement.offsetTop - 80,
+          behavior: 'smooth'
+        });
+      }
+    });
+  });
