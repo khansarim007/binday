@@ -14,6 +14,81 @@
   white-space: nowrap !important;
   border: 0 !important;
 }
+/* --- menubar & marquee --- */
+.menubar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: var(--canvas);
+  border-bottom: 1px solid var(--ink-1a);
+  padding: 8px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.menubar-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.menubar .left,
+.menubar .right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.menubar .apple-menu {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.menubar .mb-brand {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--ink);
+  text-shadow: 0 1px 2px var(--ink-1a);
+  margin-right: 12px;
+}
+.menubar .mb-item {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--ink-40);
+  margin-left: 24px;
+  cursor: pointer;
+}
+.menubar .mb-item:hover {
+  color: var(--ink);
+}
+.menubar .mb-wifi,
+.menubar .mb-bat,
+.menubar .mb-time {
+  font-size: 12px;
+  color: var(--ink-80);
+  margin-left: 24px;
+}
+.marquee {
+  margin: 32px 0;
+  overflow: hidden;
+}
+.marquee-track {
+  display: inline-flex;
+  gap: 24px;
+  animation: marquee-anim 30s linear infinite;
+}
+.marquee-track span {
+  font-size: 56px;
+  font-weight: 500;
+  letter-spacing: -1.68px;
+  color: var(--ink);
+}
+@keyframes marquee-anim {
+  0% { transform: translateX(0); }
+ 100% { transform: translateX(-50%); }
+}
 
 :root {
   --canvas: #f5f5f5;
