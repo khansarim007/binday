@@ -19,8 +19,35 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/styles.css">
 </head>
-<body>
-  <a class="skip" href="#main">Skip to content</a>
+<body aria-label="binday landing page">
+  <a class="skip" href="#main">Skip to main content</a>
+
+  <!-- menubar -->
+  <div class="menubar" aria-label="menu bar" role="menubar" tabindex="0">
+    <div class="menubar-row" role="presentation">
+      <div class="left" role="presentation">
+        <span class="apple-menu" aria-hidden="true"></span>
+        <span class="mb-brand" role="none">binday</span>
+        <span class="mb-item mb-first" role="menuitem" tabindex="-1">file</span>
+        <span class="mb-item" role="menuitem" tabindex="-1">edit</span>
+        <span class="mb-item" role="menuitem" tabindex="-1">view</span>
+        <span class="mb-item" role="menuitem" tabindex="-1">help</span>
+      </div>
+      <div class="right" role="presentation">
+        <span class="mb-wifi" aria-hidden="true"></span>
+        <span class="mb-bat">
+          <svg class="bat-svg" viewBox="0 0 24 11" aria-hidden="true">
+            <rect x="1" y="1" width="22" height="9" rx="0.5" fill="#000"/>
+            <rect id="bat-fill" x="1" y="1" width="22" height="9" rx="0.5" fill="#bada55"/>
+            <path class="bolt" fill="#fff" d="M5.4 1.8h1.2v6.4H5.4z"/>
+          </svg>
+        </span>
+        <span class="mb-time">10:24 AM</span>
+      </div>
+    </div>
+  </div>
+
+  <a class="skip" href="#main">Skip to main content</a>
 
   <header class="site-head">
     <a class="brand" href="#top">binday</a>
@@ -37,16 +64,16 @@
     <section class="hero" id="top">
       <div class="dot-grid"></div>
 
-      <div class="abs kao" style="left:12%;top:220px;transform:rotate(-8deg)">^ ω ^</div>
-      <div class="abs kao" style="right:14%;top:260px;transform:rotate(7deg)">{ ^-^ }</div>
-      <div class="abs kao" style="left:8%;top:430px;font-size:16px;transform:rotate(-7deg)">(¬_¬)</div>
-      <div class="abs kao" style="right:8%;top:470px;font-size:16px;transform:rotate(-7deg)">¯\_(ツ)_/¯</div>
+      <div class="abs kao" style="left:12%;top:220px;transform:rotate(-8deg)" data-depth="40">^ ω ^</div>
+      <div class="abs kao" style="right:14%;top:260px;transform:rotate(7deg)" data-depth="60">{ ^-^ }</div>
+      <div class="abs kao" style="left:8%;top:430px;font-size:16px;transform:rotate(-7deg)" data-depth="80">(¬_¬)</div>
+      <div class="abs kao" style="right:8%;top:470px;font-size:16px;transform:rotate(-7deg)" data-depth="20">¯\_(ツ)_/¯</div>
 
-      <div class="abs nametag m-decor" style="left:64%;top:150px;transform:rotate(-7.5deg)">
+      <div class="abs nametag m-decor" style="left:64%;top:150px;transform:rotate(-7.5deg)" data-depth="30">
         <div class="nt-hdr"><div class="nt-big">hello</div><div class="nt-sm">my name is</div></div>
         <div class="nt-body">binday</div>
       </div>
-      <div class="abs nametag blue m-decor" style="left:20%;top:560px;transform:rotate(4deg)">
+      <div class="abs nametag blue m-decor" style="left:20%;top:560px;transform:rotate(4deg)" data-depth="50">
         <div class="nt-hdr"><div class="nt-big">hello</div><div class="nt-sm">my name is</div></div>
         <div class="nt-body">binday</div>
       </div>
@@ -83,10 +110,23 @@
         <div class="win-caption">binday.exe &mdash; 192 kb</div>
       </div>
 
+      <!-- modal: zooms in from a window position -->
+      <div class="modal" role="dialog" aria-modal="true" aria-label="binding preview" tabindex="-1">
+        <div class="modal-inner" role="document">
+          <button class="modal-close" aria-label="close" role="button"></button>
+          <div class="modal-screen">
+            <div class="mini-card safe"><span class="mini-dot"></span><span class="mini-line w70"></span><span class="mini-tag safe">safe</span></div>
+            <div class="mini-card check"><span class="mini-dot"></span><span class="mini-line w50"></span><span class="mini-tag check">check</span></div>
+            <div class="mini-card review"><span class="mini-dot"></span><span class="mini-line w80"></span><span class="mini-tag review">review</span></div>
+          </div>
+          <p class="modal-caption"></p>
+        </div>
+      </div>
+
       <div class="abs headline-wrap no-fade" style="left:50%;top:60px;transform:translateX(-50%)">
         <div class="head-group">
           <h1 class="headline">binday</h1>
-          <p class="subtitle">a little cleaner that lives on your windows pc</p>
+          <p class="subtitle">a little cleaner that lives on your windows pc<span id="rotate-target" class="sr-only">. finds it</span></p>
         </div>
         <div class="btns">
           <div class="btn-col">
