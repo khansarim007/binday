@@ -3,240 +3,242 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>BinDay - free up space on your Windows PC</title>
-  <meta name="description" content="BinDay is a small native Windows app that finds build junk, package caches, temp files, old installers, duplicate files, oversized videos and leftover app packages, explains every item, then asks before it removes anything.">
-  <meta name="theme-color" content="#F8FAFC">
+  <title>binday - free up space on your windows pc</title>
+  <meta name="description" content="binday is a little cleaner that lives on your windows pc. it finds build junk, caches, temp files, old installers, duplicates and big media, explains every single item, and waits for you to say yes.">
+  <meta name="theme-color" content="#f5f5f5">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="BinDay - free up space on your Windows PC">
-  <meta property="og:description" content="Finds build junk, caches, temp files, old installers, duplicates, big videos and leftover app packages, then explains every single one. Nothing is deleted until you tick it and confirm.">
+  <meta property="og:title" content="binday - free up space on your windows pc">
+  <meta property="og:description" content="Finds build junk, caches, temp files, old installers, duplicates and big media, explains every single one, and deletes nothing until you tick it and confirm.">
   <meta property="og:image" content="https://getbinday.vercel.app/assets/og.png">
   <meta property="og:url" content="https://getbinday.vercel.app/">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="canonical" href="https://getbinday.vercel.app/">
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
-  
+
   <header class="site-head">
-    <div class="wrap head-inner">
-      <a class="brand" href="#top">
-        <img src="assets/icon.svg" alt="" width="32" height="32">
-        <span>BinDay</span>
-      </a>
-      <nav aria-label="Main">
-        <a href="#finds">What it finds</a>
-        <a href="#safety">Safety</a>
-        <a href="#how">How it works</a>
-        <a href="https://github.com/khansarim007/binday" rel="noopener">GitHub</a>
-        <a class="btn btn-primary" href="https://github.com/khansarim007/binday/releases/latest/download/BinDay.exe" download>Download for Windows</a>
-      </nav>
-    </div>
+    <a class="brand" href="#top">binday</a>
+    <nav aria-label="Main" class="nav">
+      <a href="#finds">finds</a>
+      <a href="#safety">safety</a>
+      <a href="#flow">the flow</a>
+      <a href="#faq">faq</a>
+    </nav>
+    <a class="nav-cta" href="https://github.com/khansarim007/binday/releases/latest/download/BinDay.exe" download>get binday</a>
   </header>
-  
+
   <main id="main">
     <section class="hero" id="top">
-      <div class="wrap hero-inner">
-        <div class="hero-copy">
-          <p class="eyebrow">Native Windows app &middot; 192&nbsp;KB &middot; no admin rights</p>
-          <h1>Free up space<br>on your PC.</h1>
-          <p class="lede">
-            BinDay finds the stuff your machine does not need any more &mdash; build output, dependency folders, package caches, temp files, old installers, duplicate files, oversized videos and leftover app packages &mdash; and then explains every single one of them: what it is, what would happen if you removed it, and how to get it back. You tick what you want, and it waits for you to say yes.
-          </p>
-          <p class="hero-actions">
-            <a class="btn btn-primary" href="https://github.com/khansarim007/binday/releases/latest/download/BinDay.exe" download>Download BinDay</a>
-            <a class="btn btn-ghost" href="https://github.com/khansarim007/binday" rel="noopener">View the source</a>
-          </p>
-          <p class="alt-download">
-            <a href="https://github.com/khansarim007/binday/releases/latest/download/BinDay-windows.zip" download>Prefer an installer? Get BinDay-windows.zip</a>
-            &mdash; it installs BinDay, adds a Desktop icon and an uninstaller.
-          </p>
-          <p class="fineprint">
-            Windows 10 (1903+) or Windows 11 &middot; .NET Framework 4.8 ships with both &middot; nothing is deleted without a tick and a confirmation
-          </p>
-          <p class="fineprint warning-note">
-            BinDay is not code-signed, so Windows may show &ldquo;Windows protected your PC&rdquo;. Choose <em>More info &rarr; Run anyway</em>.
-          </p>
+      <div class="dot-grid"></div>
+
+      <div class="abs kao" style="left:12%;top:220px;transform:rotate(-8deg)">^ ω ^</div>
+      <div class="abs kao" style="right:14%;top:260px;transform:rotate(7deg)">{ ^-^ }</div>
+      <div class="abs kao" style="left:8%;top:430px;font-size:16px;transform:rotate(-7deg)">(¬_¬)</div>
+      <div class="abs kao" style="right:8%;top:470px;font-size:16px;transform:rotate(-7deg)">¯\_(ツ)_/¯</div>
+
+      <div class="abs nametag m-decor" style="left:64%;top:150px;transform:rotate(-7.5deg)">
+        <div class="nt-hdr"><div class="nt-big">hello</div><div class="nt-sm">my name is</div></div>
+        <div class="nt-body">binday</div>
+      </div>
+      <div class="abs nametag blue m-decor" style="left:20%;top:560px;transform:rotate(4deg)">
+        <div class="nt-hdr"><div class="nt-big">hello</div><div class="nt-sm">my name is</div></div>
+        <div class="nt-body">binday</div>
+      </div>
+
+      <div class="abs win-wrap" style="left:9%;top:120px">
+        <div class="win">
+          <div class="bar"><div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div></div>
+          <div class="screen">
+            <div class="mini-card safe"><span class="mini-dot"></span><span class="mini-line w70"></span><span class="mini-tag safe">safe</span></div>
+            <div class="mini-card check"><span class="mini-dot"></span><span class="mini-line w50"></span><span class="mini-tag check">check</span></div>
+            <div class="mini-card review"><span class="mini-dot"></span><span class="mini-line w80"></span><span class="mini-tag review">review</span></div>
+          </div>
         </div>
-        
-        <div class="hero-art">
-          <img class="shot" src="assets/screenshot.png" alt="The BinDay window listing the items it found as large cards, with the panel on the right explaining exactly what would happen if you removed the selected one." width="1280" height="830">
+        <div class="win-caption">findings.bin</div>
+      </div>
+
+      <div class="abs win-wrap" style="right:9%;top:330px">
+        <div class="win">
+          <div class="bar"><div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div></div>
+          <div class="screen inspector">
+            <div class="insp-title">node_modules</div>
+            <div class="insp-size">2.4 GB</div>
+            <p class="insp-copy">build output. your tooling regenerates it. safe to remove &mdash; it comes back the next time you build.</p>
+            <div class="insp-acts"><span class="mini-pill">tick it</span><span class="mini-pill solid">recycle it</span></div>
+          </div>
+        </div>
+        <div class="win-caption">inspector.bin</div>
+      </div>
+
+      <div class="abs shot-wrap no-fade" style="left:50%;top:430px;transform:translateX(-50%)">
+        <div class="hellomov">
+          <img class="cover" src="assets/screenshot.png" alt="The BinDay window listing the items it found as cards, with the panel on the right explaining exactly what would happen if you removed the selected one.">
+        </div>
+        <div class="win-caption">binday.exe &mdash; 192 kb</div>
+      </div>
+
+      <div class="abs headline-wrap no-fade" style="left:50%;top:60px;transform:translateX(-50%)">
+        <div class="head-group">
+          <h1 class="headline">binday</h1>
+          <p class="subtitle">a little cleaner that lives on your windows pc</p>
+        </div>
+        <div class="btns">
+          <div class="btn-col">
+            <a class="btn mac" href="https://github.com/khansarim007/binday/releases/latest/download/BinDay.exe" download>
+              <div class="gloss"></div>
+              <span class="btn-label">download binday</span>
+            </a>
+            <div class="btn-sub">free &middot; open source &middot; no install needed</div>
+          </div>
+          <div class="btn-col">
+            <a class="btn os-win" href="https://github.com/khansarim007/binday" rel="noopener">
+              <div class="gloss"></div>
+              <span class="btn-label">view the source</span>
+            </a>
+            <div class="btn-sub">one .exe &middot; windows 10 or higher</div>
+          </div>
         </div>
       </div>
     </section>
-    
-    <section class="band" id="finds">
-      <div class="wrap">
-        <h2>What it finds</h2>
-        <p class="section-lede">
-          Each item comes with its size, its collection, and a plain sentence explaining what removing it means. If it cannot prove an item is disposable, it stays out of the list.
-        </p>
-        
-        <div class="grid">
-          <article class="card">
-            <h3>Build output</h3>
-            <p><code>node_modules</code>, <code>obj</code> and <code>bin</code>,
-               <code>target</code>, <code>.venv</code>, <code>__pycache__</code>,
-               <code>.dart_tool</code>, <code>.gradle</code>, <code>.next</code> and friends.</p>
-            <p class="card-note">Only offered when the project file sits next to it, so a folder that merely looks disposable is left alone.</p>
-          </article>
-          
-          <article class="card">
-            <h3>Package caches</h3>
-            <p>The npm, Yarn, pnpm and pip download caches, plus the NuGet, Gradle and Maven repositories and <code>%TEMP%</code>.</p>
-            <p class="card-note">Graded <em>Check</em> when clearing them means the next build needs the network.</p>
-          </article>
-          
-          <article class="card">
-            <h3>Temporary files</h3>
-            <p>Scratch space that applications are supposed to clean up themselves. Files that are in use are skipped instead of failing.</p>
-          </article>
-          
-          <article class="card">
-            <h3>Old installers</h3>
-            <p><code>.msi</code>, <code>.iso</code>, <code>.exe</code> and friends over 50&nbsp;MB and more than 30 days old, in Downloads and on the Desktop.</p>
-            <p class="card-note">Always graded <em>Review</em>, so they can only ever go to the Recycle Bin.</p>
-          </article>
-          
-          <article class="card">
-            <h3>Big videos, photos and audio</h3>
-            <p>Media files over the size floor you choose, with real Explorer-style thumbnails so you can recognise them at a glance.</p>
-            <p class="card-note">These are your own files, so BinDay never calls them junk. They are graded <em>Review</em> and can only go to the Recycle Bin.</p>
-          </article>
-          
-          <article class="card">
-            <h3>Leftover app packages</h3>
-            <p><code>.apk</code>, <code>.xapk</code>, <code>.aab</code> and friends left lying around after you installed the app somewhere else.</p>
-            <p class="card-note">Graded <em>Review</em>, Recycle Bin only.</p>
-          </article>
-          
-          <article class="card">
-            <h3>Redundant installs</h3>
-            <p>Several copies of the same installer in your Downloads folder. The newest one is kept, the older ones are offered.</p>
-          </article>
-          
-          <article class="card">
-            <h3>Any very large file</h3>
-            <p>A single file over 300&nbsp;MB, whatever it is, listed so you can decide whether it still earns its place.</p>
-          </article>
-          
-          <article class="card">
-            <h3>Duplicate files</h3>
-            <p>Grouped by size, then by a cheap prefix hash, then by a full SHA-256. Only files that agree on all three are duplicates.</p>
-            <p class="card-note">The copy with the shortest path is kept; the rest are offered for removal.</p>
-          </article>
-          
-          <article class="card card-quiet">
-            <h3>And nothing else</h3>
-            <p>No registry tweaks, no background services, no telemetry, no account. The only thing that touches the network is the "Check for updates" command, and only when you press it. No silent "cleanup" while you work.</p>
-          </article>
+
+    <section class="section" id="finds">
+      <div class="plabel">what it finds</div>
+      <p class="section-lede">build junk, caches, temp files, old installers, duplicates, big media and leftover app packages. every item comes with its size and a plain sentence on what happens if you remove it.</p>
+
+      <div class="feat-rows">
+        <div class="feat-row">
+          <div class="feat-text">
+            <h3>build output &amp; package caches</h3>
+            <p><code>node_modules</code>, <code>bin</code> &amp; <code>obj</code>, <code>target</code>, <code>.venv</code>, <code>__pycache__</code>, plus the npm, pip, NuGet, Gradle and Maven caches. only offered when a project file sits next to it, so a folder that merely <em>looks</em> disposable is left alone.</p>
+          </div>
+          <div class="feat-wave">
+            <div class="win"><div class="bar"><div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div></div>
+              <div class="screen">
+                <div class="mini-card safe"><span class="mini-dot"></span><span class="mini-line w70"></span><span class="mini-tag safe">safe</span></div>
+                <div class="mini-card safe"><span class="mini-dot"></span><span class="mini-line w50"></span><span class="mini-tag safe">safe</span></div>
+                <div class="mini-card check"><span class="mini-dot"></span><span class="mini-line w60"></span><span class="mini-tag check">check</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="feat-row align-right">
+          <div class="feat-text">
+            <h3>old installers &amp; duplicate downloads</h3>
+            <p>big <code>.msi</code>, <code>.iso</code> and <code>.exe</code> files over 30 days old, redundant copies of the same installer, and <code>.apk</code> &amp; <code>.xapk</code> files lying around after you installed the app somewhere else. always graded <em>review</em> &mdash; they only ever go to the recycle bin.</p>
+          </div>
+          <div class="feat-wave">
+            <div class="win"><div class="bar"><div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div></div>
+              <div class="screen">
+                <div class="mini-card review"><span class="mini-dot"></span><span class="mini-line w80"></span><span class="mini-tag review">review</span></div>
+                <div class="mini-card review"><span class="mini-dot"></span><span class="mini-line w60"></span><span class="mini-tag review">review</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="feat-row">
+          <div class="feat-text">
+            <h3>big media &mdash; but only yours</h3>
+            <p>videos, photos and audio over the size floor you choose, with real explorer-style thumbnails. these are your own files, so binday never calls them junk. they are graded <em>review</em> and can only go to the recycle bin.</p>
+          </div>
+          <div class="feat-wave">
+            <div class="win"><div class="bar"><div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div></div>
+              <div class="screen media">
+                <div class="thumb"></div><div class="thumb"></div><div class="thumb"></div>
+                <div class="mini-line w50"></div><div class="mini-line w80"></div><div class="mini-line w60"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="feat-row align-right">
+          <div class="feat-text">
+            <h3>and nothing else</h3>
+            <p>no registry tweaks, no background services, no telemetry, no account. the only thing that touches the network is &ldquo;check for updates&rdquo;, and only when you press it. and if it can&rsquo;t prove an item is disposable, it stays out of the list entirely.</p>
+          </div>
+          <div class="feat-wave">
+            <div class="kao-big">¯\_(ツ)_/¯</div>
+          </div>
         </div>
       </div>
     </section>
-    
-    <section class="band band-alt" id="safety">
-      <div class="wrap">
-        <h2>How it stays safe</h2>
-        <p class="section-lede">
-          The product is not the scanning, it is the trust. Every item carries a grade, and the grade decides what the app is allowed to do.
-        </p>
-        
-        <div class="grades">
-          <div class="grade grade-safe">
-            <span class="badge">Safe</span>
-            <p>Regenerated automatically by your tools. These can be moved to the Recycle Bin or deleted permanently.</p>
-          </div>
-          <div class="grade grade-check">
-            <span class="badge">Check</span>
-            <p>Regenerated, but the next build would need the network. Recycle Bin only.</p>
-          </div>
-          <div class="grade grade-review">
-            <span class="badge">Review</span>
-            <p>Could be something you want to keep. Recycle Bin only.</p>
-          </div>
-        </div>
-        
-        <ul class="rules">
-          <li>Nothing is deleted until you tick it and confirm.</li>
-          <li>Permanent delete is refused for anything that is not graded <em>Safe</em> &mdash; by the engine, not just by the button.</li>
-          <li><code>Windows</code>, <code>Program Files</code>, <code>ProgramData</code>, <code>AppData</code>, <code>$Recycle.Bin</code> and drive roots are never walked and never deleted.</li>
-          <li>Symbolic links and junctions are never followed.</li>
-          <li>Every cleanup is written to a local history you can read back in the app.</li>
-          <li>"Check for updates" tells you when a newer version is out and fetches it for you. Nothing else talks to the network.</li>
-        </ul>
+
+    <section class="section" id="safety">
+      <div class="plabel">how it stays safe</div>
+      <p class="dream-lede">the product is not the scanning. <em>it is the trust.</em></p>
+      <p class="section-lede">every item carries a grade, and the grade decides what the app is allowed to do.</p>
+
+      <div class="grades">
+        <div class="grade"><span class="badge safe">safe</span><p>regenerated automatically by your tools. recycle bin or permanent delete, your call.</p></div>
+        <div class="grade"><span class="badge check">check</span><p>regenerated, but the next build needs the network. recycle bin only.</p></div>
+        <div class="grade"><span class="badge review">review</span><p>could be something you want to keep. recycle bin only.</p></div>
+      </div>
+
+      <ul class="rules">
+        <li>nothing is deleted until you tick it and confirm.</li>
+        <li>permanent delete is refused for anything not graded <em>safe</em> &mdash; by the engine, not just the button.</li>
+        <li><code>Windows</code>, <code>Program Files</code>, <code>ProgramData</code>, <code>AppData</code> and <code>$Recycle.Bin</code> are never walked and never deleted.</li>
+        <li>symbolic links and junctions are never followed.</li>
+        <li>every cleanup is written to a local history you can read back in the app.</li>
+      </ul>
+    </section>
+
+    <section class="section" id="flow">
+      <div class="plabel">the flow</div>
+      <p class="section-lede">four steps, and you are still in the driver&rsquo;s seat for all of them.</p>
+
+      <div class="steps">
+        <div class="step"><span class="step-number">1</span><h3>pick a folder</h3><p>your user profile is pre-filled. point it at a project folder instead if that is where the junk is.</p></div>
+        <div class="step"><span class="step-number">2</span><h3>browse the collections</h3><p>dev junk, caches, videos, photos, app packages &mdash; each with a live count and size. sort by size, name or date.</p></div>
+        <div class="step"><span class="step-number">3</span><h3>read what would happen</h3><p>select an item and the panel tells you what it is, exactly what would be removed, and how to get it back if you are wrong.</p></div>
+        <div class="step"><span class="step-number">4</span><h3>tick and confirm</h3><p>recycle it, or delete the safe ones for good. a final review screen lists everything first. either way, you decide.</p></div>
       </div>
     </section>
-    
-    <section class="band" id="how">
-      <div class="wrap">
-        <h2>How it works</h2>
-        <div class="steps">
-          <div class="step">
-            <span class="step-number">1</span>
-            <h3>Pick a folder</h3>
-            <p>Your user profile is pre-filled. Point it at a project folder instead if that is where the junk is.</p>
-          </div>
-          <div class="step">
-            <span class="step-number">2</span>
-            <h3>Browse the collections</h3>
-            <p>Dev junk, caches, videos, photos, app packages, redundant installs and more &mdash; each with a live count and size. Sort by size, name or date, in big cards or a details table.</p>
-          </div>
-          <div class="step">
-            <span class="step-number">3</span>
-            <h3>Read what would happen</h3>
-            <p>Select an item and the panel tells you what it is, exactly what would be removed, and how to get it back if you are wrong.</p>
-          </div>
-          <div class="step">
-            <span class="step-number">4</span>
-            <h3>Tick and confirm</h3>
-            <p>Move the ticked items to the Recycle Bin, or delete the safe ones for good. A final review screen lists everything first. Either way, you decide.</p>
-          </div>
-        </div>
-        
-        <div class="cta">
-          <h3>Ready when you are</h3>
-          <p class="cta-copy">One small file, and you are running. Install it properly if you prefer.</p>
-          <p class="cta-copy small">
-            Running it from your Downloads folder is fine &mdash; the <em>Desktop shortcut</em> button inside BinDay puts an icon on your Desktop so you can always find it again.
-          </p>
-          <p class="hero-actions">
-            <a class="btn btn-primary" href="https://github.com/khansarim007/binday/releases/latest/download/BinDay.exe" download>Download BinDay</a>
-            <a class="btn btn-ghost" href="https://github.com/khansarim007/binday/releases/latest" rel="noopener">Release notes</a>
-          </p>
-        </div>
+
+    <section class="section" id="faq">
+      <div class="plabel">faq</div>
+      <p class="section-lede">the short version of what to know before you run it.</p>
+
+      <div class="faq-list">
+        <details class="faq"><summary>does it just delete stuff?</summary><p>no. it scans, it explains, and it asks. nothing is removed until you tick the item and confirm on a final review screen.</p></details>
+        <details class="faq"><summary>is anything running in the background?</summary><p>no. no services, no shell extensions, no telemetry. the only network call in the app is &ldquo;check for updates&rdquo; and it only happens when you press it.</p></details>
+        <details class="faq"><summary>what does &ldquo;not code-signed&rdquo; mean?</summary><p>windows may show &ldquo;windows protected your pc&rdquo; when you first run it. choose <em>more info &rarr; run anyway</em>. the app itself never needs admin rights.</p></details>
+        <details class="faq"><summary>can i get things back if i made a mistake?</summary><p>yes. the safe and check grades go to the recycle bin by default, so everything comes back until you empty the bin. permanent delete is only ever available for items the engine proves are regeneratable.</p></details>
+        <details class="faq"><summary>what about my own files?</summary><p>big media and old installers are graded <em>review</em> and can only go to the recycle bin. binday never calls your own files junk.</p></details>
       </div>
     </section>
-    
-    <section class="band" id="source">
-      <div class="wrap">
-        <h2>Build it yourself</h2>
-        <p class="section-lede">
-          BinDay is open source. The engine is plain C# with no dependencies, and the test harness runs on any machine.
-        </p>
-        <pre class="code"><code>git clone https://github.com/khansarim007/binday.git
-cd binday
-./build.sh</code></pre>
-        <p class="fineprint">
-          MIT licensed &middot; issues and pull requests welcome
-        </p>
-      </div>
-    </section>
-    
-  </main>
-  
-  <footer class="site-foot">
-    <div class="wrap foot-inner">
-      <p>BinDay &mdash; clear the junk, keep the good stuff.</p>
-      <p class="foot-links">
-        <a href="https://github.com/khansarim007/binday" rel="noopener">Source</a>
-        <a href="https://github.com/khansarim007/binday/releases/latest" rel="noopener">Releases</a>
-        <a href="https://github.com/khansarim007/binday/issues" rel="noopener">Report an issue</a>
-        <a href="https://github.com/khansarim007/binday/blob/main/LICENSE" rel="noopener">MIT license</a>
+
+    <section class="section cta-section" id="source">
+      <div class="plabel">ready when you are</div>
+      <p class="cta-copy">one small file, and you are running. no install, no account, no admin.</p>
+      <p class="btns solo">
+        <a class="btn mac" href="https://github.com/khansarim007/binday/releases/latest/download/BinDay.exe" download>
+          <div class="gloss"></div>
+          <span class="btn-label">download binday</span>
+        </a>
       </p>
+      <p class="btn-sub-center">prefer an installer? <a href="https://github.com/khansarim007/binday/releases/latest/download/BinDay-windows.zip" download>get the .zip</a> &mdash; it adds a desktop icon and an uninstaller.</p>
+      <p class="fineprint">open source &middot; plain C#, no dependencies &middot; <a href="https://github.com/khansarim007/binday" rel="noopener">build it yourself</a></p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wordmark">binday</div>
+    <div class="foot-cols">
+      <div class="foot-col"><div class="foot-h">product</div><a href="#finds">finds</a><a href="#safety">safety</a><a href="#flow">the flow</a><a href="#faq">faq</a></div>
+      <div class="foot-col"><div class="foot-h">source</div><a href="https://github.com/khansarim007/binday" rel="noopener">repository</a><a href="https://github.com/khansarim007/binday/releases/latest" rel="noopener">releases</a><a href="https://github.com/khansarim007/binday/issues" rel="noopener">report an issue</a></div>
     </div>
+    <p class="foot-note">*binday never deletes anything until you tick it and confirm.</p>
+    <p class="foot-copy">© binday. a small app that asks first.</p>
   </footer>
-  
+
   <script src="assets/main.js" defer></script>
 </body>
 </html>
