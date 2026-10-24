@@ -241,16 +241,24 @@ img { max-width: 100%; display: block; }
 
 .stage {
   position: relative;
+  --scale: min(1, calc(100vw / 1440));
+  transform: scale(var(--scale));
+  transform-origin: top center;
+  width: 1440px;
+  margin: 0 auto;
+}
+
+/* prevent horizontal scroll from scaling */
+html, body {
+  overflow-x: hidden;
 }
 
 .hero {
   position: relative;
   isolation: isolate;
   z-index: 1;
-  width: 100%;
-  max-width: 1440px;
-  height: auto;
-  min-height: 966px;
+  width: 1440px;
+  height: 966px;
   margin: 0 auto;
   background-image: radial-gradient(var(--ink-21) 1px, #0000 1.3px);
   background-size: 34.238px 34px;
