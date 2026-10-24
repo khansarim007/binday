@@ -74,7 +74,7 @@ if (menubar) {
 
 // ==== 4. hero window drag ====
 {
-  const wraps = document.querySelectorAll('.win-wrap');
+  const wraps = document.querySelectorAll('.abs.win-wrap');
   wraps.forEach(wrap => {
     const win = wrap.querySelector('.win');
     const bar = win ? win.querySelector('.bar') : null;
