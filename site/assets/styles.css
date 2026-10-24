@@ -374,7 +374,7 @@ html, body {
 }
 
 .win-caption {
-  margin-top: 8px;
+  margin-top: 12px;
   text-align: center;
   font-family: var(--font-mono);
   font-size: 12px;
@@ -476,7 +476,7 @@ html, body {
 .hellomov {
   position: relative;
   overflow: hidden;
-  width: min(800px, 78vw);
+  width: 100%;
   aspect-ratio: 100 / 65;
   background: var(--screen-bg);
   border: 1px solid #000;
