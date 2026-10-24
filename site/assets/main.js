@@ -91,14 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
   marquee.setAttribute('aria-hidden', 'true');
   let phraseHTML = phrases.map(p => `<span>${p}</span>`).join(' ');
   marquee.innerHTML = phraseHTML;
-  // insert marquee after hero, before first section
-  const hero = document.querySelector('.hero');
-  if (hero && hero.nextElementSibling) {
-    hero.parentNode.insertBefore(marquee, hero.nextElementSibling);
-  } else if (hero) {
-    document.body.insertBefore(marquee, hero.nextSibling || hero);
-  }
-  if (!marquee.parentNode) document.body.appendChild(marquee);
+  // insert marquee into body (falls back if hero not found yet)
+  document.body.appendChild(marquee);
 
   const track = document.createElement('div');
   track.className = 'marquee-track';
