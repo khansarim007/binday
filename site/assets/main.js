@@ -80,7 +80,7 @@ if (menubar) {
     if (!wrap || !bar) return;
     wrap.style.position = 'absolute';
     let active = false, sx = 0, sy = 0, lx = wrap.offsetLeft, ly = wrap.offsetTop;
-    const onDown = e => { e.preventDefault(); active = true; sx = e.clientX; sy = e.clientY; wrap.style.cursor = 'grabbing'; bar.style.cursor = 'grabbing'; wrap.style.userSelect = 'none'; bar.style.userSelect = 'none'; document.body.style.userSelect = 'none'; bar.setPointerCapture(e.pointerId); };
+    const onDown = e => { e.preventDefault(); active = true; sx = e.clientX; sy = e.clientY; wrap.style.cursor = 'grabbing'; bar.style.cursor = 'grabbing'; wrap.style.userSelect = 'none'; bar.style.userSelect = 'none'; document.body.style.userSelect = 'none'; };
     const onMove = e => { if (!active) return; lx = Math.max(16, Math.min(window.innerWidth - wrap.offsetWidth - 32, lx + (e.clientX - sx))); ly = Math.max(16, Math.min(window.innerHeight - wrap.offsetHeight - 32, ly + (e.clientY - sy))); wrap.style.left = lx + 'px'; wrap.style.top = ly + 'px'; sx = e.clientX; sy = e.clientY; };
     const onUp = e => { if (active) { wrap.style.cursor = 'grab'; bar.style.cursor = 'grab'; wrap.style.userSelect = ''; bar.style.userSelect = ''; document.body.style.userSelect = ''; } active = false; };
     bar.style.touchAction = 'none';
