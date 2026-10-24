@@ -336,6 +336,11 @@ html, body {
   user-select: none;
 }
 
+#big-video .win {
+  padding: 0;
+  border-radius: 16px;
+}
+
 .win .bar {
   display: flex;
   justify-content: space-between;
@@ -479,9 +484,11 @@ html, body {
   width: 100%;
   aspect-ratio: 100 / 65;
   background: var(--screen-bg);
-  border: 1px solid #000;
   border-radius: 16px;
-  box-shadow: 0 10px 24px var(--ink-1f);
+}
+
+#big-video .win .hellomov {
+  border-radius: 16px;
 }
 .hellomov:after {
   content: "";
