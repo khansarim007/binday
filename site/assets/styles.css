@@ -967,3 +967,74 @@ img { max-width: 100%; }
   .btn-col { width: 100%; max-width: 280px; }
   .headline { font-size: 44px; }
 }
+
+/* --- modal (click-to-zoom windows) --- */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+}
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+}
+.modal-content {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: min(92vw, 720px);
+  max-height: 80vh;
+  background: #fff;
+  border: 1px solid var(--ink-26);
+  border-radius: 12px;
+  box-shadow: 0 20px 40px var(--ink-1f);
+  display: flex;
+  flex-direction: column;
+}
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 20px;
+  color: var(--ink-40);
+}
+.modal-close:hover { color: var(--ink); }
+.modal-screen {
+  flex: 1;
+  background: #fff;
+  border-radius: 8px;
+  margin: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+.modal-caption {
+  margin: 0 16px 16px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-80);
+  text-align: center;
+}
+
+/* --- word rotator --- */
+.rotator {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: -0.02em;
+  color: var(--ink-80);
+}
+
+/* --- hero window grab cursor --- */
+.win .bar { cursor: grab; }
+.win .bar:active { cursor: grabbing; }
