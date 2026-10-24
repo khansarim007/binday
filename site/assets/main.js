@@ -87,5 +87,5 @@ if (menubar) {
     bar.addEventListener('mousedown', onMouseDown);
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
-  });
+  }
 }
