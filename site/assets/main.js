@@ -74,14 +74,15 @@ if (menubar) {
 
 // ==== 4. hero window drag ====
 {
-  const wins = document.querySelectorAll('.win-wrap .win');
-  wins.forEach(win => {
-    const bar = win.querySelector('.bar');
-    if (!bar) return;
-    let dragging = false, dx = 0, dy = 0, offsetX = win.offsetLeft, offsetY = win.offsetTop;
-    const onMouseDown = e => { if (e.button !== 0) return; dragging = true; dx = e.clientX; dy = e.clientY; win.style.cursor = 'grabbing'; win.style.userSelect = 'none'; document.body.style.userSelect = 'none'; };
-    const onMouseMove = e => { if (!dragging) return; const dxm = e.clientX - dx, dym = e.clientY - dy; const maxX = window.innerWidth - win.offsetWidth - 32, maxY = window.innerHeight - win.offsetHeight - 32; offsetX = Math.max(16, Math.min(maxX, offsetX + dxm)); offsetY = Math.max(16, Math.min(maxY, offsetY + dym)); win.style.left = `${offsetX}px`; win.style.top = `${offsetY}px`; dx = e.clientX; dy = e.clientY; };
-    const onMouseUp = e => { if (dragging) { win.style.cursor = ''; win.style.userSelect = ''; document.body.style.userSelect = ''; } dragging = false; };
+  const wraps = document.querySelectorAll('.win-wrap');
+  wraps.forEach(wrap => {
+    const win = wrap.querySelector('.win');
+    const bar = win ? win.querySelector('.bar') : null;
+    if (!wrap || !bar) return;
+    let dragging = false, dx = 0, dy = 0, offsetX = wrap.offsetLeft, offsetY = wrap.offsetTop;
+    const onMouseDown = e => { if (e.button !== 0) return; dragging = true; dx = e.clientX; dy = e.clientY; wrap.style.cursor = 'grabbing'; win.style.cursor = 'grabbing'; wrap.style.userSelect = 'none'; win.style.userSelect = 'none'; document.body.style.userSelect = 'none'; };
+    const onMouseMove = e => { if (!dragging) return; const dxm = e.clientX - dx, dym = e.clientY - dy; const maxX = window.innerWidth - wrap.offsetWidth - 32, maxY = window.innerHeight - wrap.offsetHeight - 32; offsetX = Math.max(16, Math.min(maxX, offsetX + dxm)); offsetY = Math.max(16, Math.min(maxY, offsetY + dym)); wrap.style.left = `${offsetX}px`; wrap.style.top = `${offsetY}px`; dx = e.clientX; dy = e.clientY; };
+    const onMouseUp = e => { if (dragging) { wrap.style.cursor = ''; win.style.cursor = ''; wrap.style.userSelect = ''; win.style.userSelect = ''; document.body.style.userSelect = ''; } dragging = false; };
     bar.style.cursor = 'grab';
     bar.addEventListener('mousedown', onMouseDown);
     document.addEventListener('mousemove', onMouseMove);
