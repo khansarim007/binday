@@ -76,18 +76,20 @@ if (menubar) {
 {
   const wraps = document.querySelectorAll('.abs.win-wrap');
   wraps.forEach(wrap => {
-    const win = wrap.querySelector('.win');
-    const bar = win ? win.querySelector('.bar') : null;
+    const bar = wrap.querySelector('.bar');
     if (!wrap || !bar) return;
-    let dragging = false, dx = 0, dy = 0, offsetX = wrap.offsetLeft, offsetY = wrap.offsetTop;
-    const onMouseDown = e => { if (e.button !== 0) return; dragging = true; dx = e.clientX; dy = e.clientY; wrap.style.cursor = 'grabbing'; win.style.cursor = 'grabbing'; wrap.style.userSelect = 'none'; win.style.userSelect = 'none'; document.body.style.userSelect = 'none'; };
-    const onMouseMove = e => { if (!dragging) return; const dxm = e.clientX - dx, dym = e.clientY - dy; const maxX = window.innerWidth - wrap.offsetWidth - 32, maxY = window.innerHeight - wrap.offsetHeight - 32; offsetX = Math.max(16, Math.min(maxX, offsetX + dxm)); offsetY = Math.max(16, Math.min(maxY, offsetY + dym)); wrap.style.left = `${offsetX}px`; wrap.style.top = `${offsetY}px`; dx = e.clientX; dy = e.clientY; };
-    const onMouseUp = e => { if (dragging) { wrap.style.cursor = ''; win.style.cursor = ''; wrap.style.userSelect = ''; win.style.userSelect = ''; document.body.style.userSelect = ''; } dragging = false; };
+    wrap.style.position = 'absolute';
+    let active = false, sx = 0, sy = 0, lx = wrap.offsetLeft, ly = wrap.offsetTop;
+    const onDown = e => { e.preventDefault(); active = true; sx = e.clientX; sy = e.clientY; wrap.style.cursor = 'grabbing'; bar.style.cursor = 'grabbing'; wrap.style.userSelect = 'none'; bar.style.userSelect = 'none'; document.body.style.userSelect = 'none'; bar.setPointerCapture(e.pointerId); };
+    const onMove = e => { if (!active) return; lx = Math.max(16, Math.min(window.innerWidth - wrap.offsetWidth - 32, lx + (e.clientX - sx))); ly = Math.max(16, Math.min(window.innerHeight - wrap.offsetHeight - 32, ly + (e.clientY - sy))); wrap.style.left = lx + 'px'; wrap.style.top = ly + 'px'; sx = e.clientX; sy = e.clientY; };
+    const onUp = e => { if (active) { wrap.style.cursor = 'grab'; bar.style.cursor = 'grab'; wrap.style.userSelect = ''; bar.style.userSelect = ''; document.body.style.userSelect = ''; } active = false; };
+    bar.style.touchAction = 'none';
     bar.style.cursor = 'grab';
-    bar.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-  }
+    bar.addEventListener('pointerdown', onDown);
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onUp);
+  });
 }
 
 // ==== 5. click-to-zoom on hero windows + screenshot ====
