@@ -22,18 +22,18 @@
 <body aria-label="binday landing page">
   <a class="skip" href="#main">Skip to main content</a>
 
-  <!-- menubar -->
-  <div class="menubar" aria-label="menu bar" role="menubar" tabindex="0">
-    <div class="menubar-row" role="presentation">
-      <div class="left" role="presentation">
+  <!-- menubar (sticky top bar like heyclicky) -->
+  <div class="menubar" aria-label="menu bar" role="menubar">
+    <div class="menubar-row">
+      <div class="left">
         <span class="apple-menu" aria-hidden="true"></span>
         <span class="mb-brand" role="none">binday</span>
-        <span class="mb-item mb-first" role="menuitem" tabindex="-1">file</span>
+        <span class="mb-item" role="menuitem" tabindex="-1">file</span>
         <span class="mb-item" role="menuitem" tabindex="-1">edit</span>
         <span class="mb-item" role="menuitem" tabindex="-1">view</span>
         <span class="mb-item" role="menuitem" tabindex="-1">help</span>
       </div>
-      <div class="right" role="presentation">
+      <div class="right">
         <span class="mb-wifi" aria-hidden="true"></span>
         <span class="mb-bat">
           <svg class="bat-svg" viewBox="0 0 24 11" aria-hidden="true">
@@ -43,6 +43,7 @@
           </svg>
         </span>
         <span class="mb-time">10:24 AM</span>
+        <span class="mb-beach" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><path d="M8 12l2.5-5 2.5 5 5-2.5-5 2.5z"/></svg></span>
       </div>
     </div>
   </div>
@@ -60,15 +61,21 @@
     <a class="nav-cta" href="https://github.com/khansarim007/binday/releases/latest/download/BinDay.exe" download>get binday</a>
   </header>
 
-  <main id="main">
-    <section class="hero" id="top">
+  <main id="main" style="--page-zoom: calc(100vw / 1440px)">
+    <section class="hero stage" id="top">
       <div class="dot-grid"></div>
 
-      <div class="abs kao" style="left:12%;top:220px;transform:rotate(-8deg)" data-depth="40">^ ω ^</div>
-      <div class="abs kao" style="right:14%;top:260px;transform:rotate(7deg)" data-depth="60">{ ^-^ }</div>
-      <div class="abs kao" style="left:8%;top:430px;font-size:16px;transform:rotate(-7deg)" data-depth="80">(¬_¬)</div>
-      <div class="abs kao" style="right:8%;top:470px;font-size:16px;transform:rotate(-7deg)" data-depth="20">¯\_(ツ)_/¯</div>
+      <!-- small auto-playing video placeholders scattered like heyclicky -->
+      <div class="abs m-decor no-drag mini-vid" style="left:88%;top:4%;width:100px;height:40px;border-radius:4px;background:linear-gradient(135deg,#cbd5e1,#94a3b8);box-shadow:0 4px 8px var(--ink-14);position:relative;overflow:hidden"></div>
+      <div class="abs m-decor no-drag mini-vid" style="left:60%;top:12%;width:45px;height:45px;border-radius:6px;background:linear-gradient(135deg,#cbd5e1,#94a3b8);box-shadow:0 4px 8px var(--ink-14);position:relative;overflow:hidden"></div>
 
+      <!-- kaomoji stickers (draggable easter eggs) -->
+      <div class="abs kao m-decor" style="left:12%;top:220px;transform:rotate(-8deg)" data-depth="40">^ ω ^</div>
+      <div class="abs kao m-decor" style="right:14%;top:260px;transform:rotate(7deg)" data-depth="60">{ ^-^ }</div>
+      <div class="abs kao m-decor" style="left:8%;top:430px;font-size:16px;transform:rotate(-7deg)" data-depth="80">(¬_¬)</div>
+      <div class="abs kao m-decor" style="right:8%;top:470px;font-size:16px;transform:rotate(-7deg)" data-depth="20">¯\_(ツ)_/¯</div>
+
+      <!-- hello nametags -->
       <div class="abs nametag m-decor" style="left:64%;top:150px;transform:rotate(-7.5deg)" data-depth="30">
         <div class="nt-hdr"><div class="nt-big">hello</div><div class="nt-sm">my name is</div></div>
         <div class="nt-body">binday</div>
@@ -78,7 +85,8 @@
         <div class="nt-body">binday</div>
       </div>
 
-      <div class="abs win-wrap" style="left:9%;top:120px">
+      <!-- mini video windows (draggable) -->
+      <div class="abs win-wrap vidwin" style="left:9%;top:120px">
         <div class="win">
           <div class="bar"><div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div></div>
           <div class="screen">
@@ -90,7 +98,7 @@
         <div class="win-caption">findings.bin</div>
       </div>
 
-      <div class="abs win-wrap" style="right:9%;top:330px">
+      <div class="abs win-wrap vidwin" style="right:9%;top:330px">
         <div class="win">
           <div class="bar"><div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div></div>
           <div class="screen inspector">
@@ -103,17 +111,19 @@
         <div class="win-caption">inspector.bin</div>
       </div>
 
-      <div class="abs shot-wrap no-fade" style="left:50%;top:430px;transform:translateX(-50%)">
+      <!-- big video / screenshot -->
+      <div class="abs win-wrap no-fade" id="big-video" style="left:50%;top:430px;transform:translateX(-50%);width:800px">
         <div class="hellomov">
           <img class="cover" src="assets/screenshot.png" alt="The BinDay window listing the items it found as cards, with the panel on the right explaining exactly what would happen if you removed the selected one.">
         </div>
         <div class="win-caption">binday.exe &mdash; 192 kb</div>
       </div>
 
-      <!-- modal: zooms in from a window position -->
+      <!-- click-to-zoom modal -->
       <div class="modal" role="dialog" aria-modal="true" aria-label="binding preview" tabindex="-1">
-        <div class="modal-inner" role="document">
-          <button class="modal-close" aria-label="close" role="button"></button>
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+          <button class="modal-close" role="button" aria-label="close"></button>
           <div class="modal-screen">
             <div class="mini-card safe"><span class="mini-dot"></span><span class="mini-line w70"></span><span class="mini-tag safe">safe</span></div>
             <div class="mini-card check"><span class="mini-dot"></span><span class="mini-line w50"></span><span class="mini-tag check">check</span></div>
@@ -123,7 +133,8 @@
         </div>
       </div>
 
-      <div class="abs headline-wrap no-fade" style="left:50%;top:60px;transform:translateX(-50%)">
+      <!-- headline + buttons -->
+      <div class="abs headline-wrap no-fade" id="hero-center" style="left:50%;top:60px;transform:translateX(-50%)">
         <div class="head-group">
           <h1 class="headline">binday</h1>
           <p class="subtitle">a little cleaner that lives on your windows pc<span id="rotate-target" class="sr-only">. finds it</span></p>
@@ -147,13 +158,15 @@
       </div>
     </section>
 
-    <div class="marquee" aria-hidden="true">
+    <!-- marquee with scroll-velocity spring physics -->
+    <div class="marquee reveal rv-late" aria-hidden="true">
       <div class="marquee-track">
         <span>finds it </span><span>explains it </span><span>asks first </span><span>recycles it </span><span>restores it </span><span>nothing lost </span>
       </div>
     </div>
 
-    <section class="section" id="finds">
+    <!-- sections -->
+    <section class="section reveal" id="finds">
       <div class="plabel">what it finds</div>
       <p class="section-lede">build junk, caches, temp files, old installers, duplicates, big media and leftover app packages. every item comes with its size and a plain sentence on what happens if you remove it.</p>
 
@@ -216,7 +229,7 @@
       </div>
     </section>
 
-    <section class="section" id="safety">
+    <section class="section reveal" id="safety">
       <div class="plabel">how it stays safe</div>
       <p class="dream-lede">the product is not the scanning. <em>it is the trust.</em></p>
       <p class="section-lede">every item carries a grade, and the grade decides what the app is allowed to do.</p>
@@ -236,7 +249,7 @@
       </ul>
     </section>
 
-    <section class="section" id="flow">
+    <section class="section reveal" id="flow">
       <div class="plabel">the flow</div>
       <p class="section-lede">four steps, and you are still in the driver&rsquo;s seat for all of them.</p>
 
@@ -248,7 +261,7 @@
       </div>
     </section>
 
-    <section class="section" id="faq">
+    <section class="section reveal" id="faq">
       <div class="plabel">faq</div>
       <p class="section-lede">the short version of what to know before you run it.</p>
 
@@ -261,7 +274,7 @@
       </div>
     </section>
 
-    <section class="section cta-section" id="source">
+    <section class="section cta-section reveal rv-late2" id="source">
       <div class="plabel">ready when you are</div>
       <p class="cta-copy">one small file, and you are running. no install, no account, no admin.</p>
       <p class="btns solo">
@@ -275,7 +288,7 @@
     </section>
   </main>
 
-  <footer class="footer">
+  <footer class="footer reveal">
     <div class="wordmark">binday</div>
     <div class="foot-cols">
       <div class="foot-col"><div class="foot-h">product</div><a href="#finds">finds</a><a href="#safety">safety</a><a href="#flow">the flow</a><a href="#faq">faq</a></div>
