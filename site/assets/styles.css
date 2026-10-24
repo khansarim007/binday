@@ -241,9 +241,6 @@ img { max-width: 100%; display: block; }
 
 .stage {
   position: relative;
-  --scale: min(1, calc(100vw / 1440));
-  transform: scale(var(--scale));
-  transform-origin: top center;
   width: 1440px;
   margin: 0 auto;
 }
@@ -1089,4 +1086,24 @@ html, body {
   .steps { grid-template-columns: 1fr; }
   .btn-col { width: 100%; max-width: 280px; }
   .headline { font-size: 44px; }
+}
+
+/* Responsive scaling for heyclicky-style hero - matches heyclicky.com */
+@property --page-zoom {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+
+@media (min-width: 1024px) and (max-width: 1439.98px) {
+  html {
+    --page-zoom: calc(100vw / 1440);
+  }
+  .stage {
+    zoom: var(--page-zoom);
+  }
+  /* keep menubar at normal size */
+  .menubar, .site-head {
+    zoom: calc(1 / var(--page-zoom));
+  }
 }
