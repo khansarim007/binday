@@ -52,7 +52,7 @@ body {
   -webkit-font-smoothing: antialiased;
   color: var(--ink);
   background: var(--canvas);
-  overflow-x: hidden;
+  min-height: 100vh;
 }
 
 img { max-width: 100%; display: block; }
@@ -241,19 +241,20 @@ img { max-width: 100%; display: block; }
 
 .stage {
   position: relative;
-  zoom: var(--page-zoom);
 }
 
 .hero {
   position: relative;
   isolation: isolate;
   z-index: 1;
-  width: 1440px;
-  height: 966px;
+  width: 100%;
+  max-width: 1440px;
+  height: auto;
+  min-height: 966px;
   margin: 0 auto;
   background-image: radial-gradient(var(--ink-21) 1px, #0000 1.3px);
   background-size: 34.238px 34px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .dot-grid {
@@ -617,7 +618,8 @@ img { max-width: 100%; display: block; }
   position: relative;
   padding: 110px 24px;
   background: var(--white);
-  width: 1440px;
+  width: 100%;
+  max-width: 1440px;
   margin: 0 auto;
 }
 
@@ -975,13 +977,16 @@ img { max-width: 100%; display: block; }
 /* ---------- scroll reveal ---------- */
 
 .reveal {
+  opacity: 1;
+  transform: none;
+}
+
+.reveal:not(.in) {
   opacity: 0;
   transform: translateY(22px) scale(0.965);
 }
 
 .reveal.in {
-  opacity: 1;
-  transform: none;
   transition: opacity 0.55s ease, transform 0.7s cubic-bezier(0.2, 0.7, 0.25, 1);
 }
 
